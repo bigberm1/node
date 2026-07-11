@@ -791,9 +791,9 @@
           .section-title {
             font-weight: bold;
             color: #039780;
-            border-left: 4px solid #636e72;
+            border-left: 4px solid #ED7E23;
             padding-left: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             font-size: 16px;
           }
           .info-row {
@@ -886,12 +886,12 @@
 
         <div class="section">
           <div class="section-title">รายละเอียดกิจกรรม</div>
-          <div style="white-space: pre-wrap; line-height: 1.8;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
+          <div style="white-space: pre-wrap; line-height: 1.8; background: none; padding: 0;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
         </div>
 
         <div class="section">
           <div class="section-title">ผลที่เกิดขึ้นจากการทำกิจกรรม</div>
-          <div style="white-space: pre-wrap; line-height: 1.8;">${getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '-'}</div>
+          <div style="white-space: pre-wrap; line-height: 1.8; background: none; padding: 0;">${getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '-'}</div>
         </div>
 
         ${([1,2,3,4].some(i => getVal(`ภาพกิจกรรม${i}`))) ? `
