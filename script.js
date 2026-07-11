@@ -2165,11 +2165,30 @@
   /**
    * Helper to improve Thai word wrapping in pdfMake
    */
+
   function prepareThaiText(text) {
-    if (!text) return '-';
-    // Insert zero-width space after Thai characters that are not followed by whitespace,
-    // allowing line breaks between Thai words while preserving existing spaces
-    return text.replace(/([ก-๙])(?=[^\sก-๙]|[ก-๙])/g, '$1\u200B');
+
+    if (!text || text.trim() === '') return '-';
+  
+    text = text
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .trim();
+  
+    // Browser ใหม่
+    if (window.Intl && Intl.Segmenter) {
+  
+      const segmenter = new Intl.Segmenter('th', {
+        granularity: 'word'
+      });
+  
+      return [...segmenter.segment(text)]
+        .map(s => s.segment)
+        .join('\u200B');
+    }
+  
+    // Browser เก่า
+    return text.replace(/([ก-๙])(?=[\s\n])/g, '$1\u200B');
   }
 
   /**
@@ -2306,9 +2325,10 @@
             color: '#555'
           },
           contentBox: {
-            margin: [0, 2, 0, 10],
-            lineHeight: 1.05,
-            alignment: 'justify'
+            fontSize: 16,
+            margin: [0, 5, 0, 15],
+            lineHeight: 1.3,
+            alignment: 'left'
           },
           tableHeader: {
             bold: true,
