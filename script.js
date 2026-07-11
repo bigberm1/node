@@ -762,8 +762,257 @@
     });
   }
 
-  function exportPDF(id) {
-    // PDF generation removed by user request
+  function generateEventPDF(id) {
+    const e = appData.events.find(item => (item.ID || item.id) === id);
+    if (!e) return;
+
+    let budget = { income: 0, expenses: [0, 0, 0, 0, 0, 0] };
+    try {
+      budget = JSON.parse(e['งบประมาณ'] || '{}');
+    } catch (err) { }
+
+    const totalExpense = (budget.expenses || []).reduce((a, b) => a + b, 0);
+    const balance = (budget.income || 0) - totalExpense;
+
+    // Create PDF content with proper styling for Thai fonts and page breaks
+    const pdfContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@100;200;300;400;500;600&family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
+        <style>
+          * {
+            font-family: 'Sarabun', 'Kanit', sans-serif;
+            box-sizing: border-box;
+          }
+          body {
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #039780;
+          }
+          .header h1 {
+            color: #039780;
+            margin: 0 0 10px 0;
+            font-size: 24px;
+          }
+          .header p {
+            color: #666;
+            margin: 0;
+            font-size: 14px;
+          }
+          .section {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+          }
+          .section-title {
+            font-weight: bold;
+            color: #039780;
+            border-left: 4px solid #636e72;
+            padding-left: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
+          }
+          .info-row {
+            display: flex;
+            margin-bottom: 8px;
+          }
+          .info-label {
+            width: 180px;
+            font-weight: bold;
+            color: #666;
+          }
+          .info-value {
+            flex: 1;
+          }
+          .text-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            page-break-inside: avoid;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+          }
+          th {
+            background: #f8f9fa;
+            font-weight: bold;
+          }
+          .text-end {
+            text-align: right;
+          }
+          .bg-light {
+            background: #f8f9fa;
+          }
+          .fw-bold {
+            font-weight: bold;
+          }
+          .images-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+          }
+          .image-item {
+            width: calc(50% - 5px);
+            page-break-inside: avoid;
+          }
+          .image-item img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>รายงานสรุปผลการจัดกิจกรรม</h1>
+          <p>หน่วยจัดการจังหวัดเชียงราย (Node มุ่งเป้า สสส.)</p>
+        </div>
+
+        <div class="section">
+          <div class="section-title">ข้อมูลทั่วไป</div>
+          <div class="info-row">
+            <div class="info-label">ชื่อกิจกรรม:</div>
+            <div class="info-value">${e['ชื่อกิจกรรม'] || '-'}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">วันที่จัดกิจกรรม:</div>
+            <div class="info-value">${toThaiDate(e['วันที่จัดกิจกรรม'])}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">เวลา:</div>
+            <div class="info-value">${e['เวลาเริ่ม'] || '-'} น. ถึง ${e['เวลาสิ้นสุด'] || '-'} น.</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">สถานที่:</div>
+            <div class="info-value">${e['สถานที่'] || '-'}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">ชุมชน/หมู่บ้าน:</div>
+            <div class="info-value">${e.village || '-'}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">กลุ่มเป้าหมาย:</div>
+            <div class="info-value">${e['กลุ่มเป้าหมาย'] || '-'}</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">รายละเอียดกิจกรรม</div>
+          <div class="text-box">${e['รายละเอียดกิจกรรม'] || '-'}</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">ผลที่เกิดขึ้นจากการทำกิจกรรม</div>
+          <div class="text-box">${e['ผลที่เกิดขึ้นจากการทำกิจกรรม'] || '-'}</div>
+        </div>
+
+        ${(e['ภาพกิจกรรม1'] || e['ภาพกิจกรรม2'] || e['ภาพกิจกรรม3'] || e['ภาพกิจกรรม4']) ? `
+        <div class="section">
+          <div class="section-title">ภาพประกอบกิจกรรม</div>
+          <div class="images-container">
+            ${[1,2,3,4].map(i => e[`ภาพกิจกรรม${i}`] ? `
+              <div class="image-item">
+                <img src="${e[`ภาพกิจกรรม${i}`]}" alt="ภาพกิจกรรม ${i}">
+              </div>
+            ` : '').join('')}
+          </div>
+        </div>
+        ` : ''}
+
+        <div class="section">
+          <div class="section-title">สรุปงบประมาณ</div>
+          <table>
+            <thead>
+              <tr>
+                <th>รายการ</th>
+                <th class="text-end">จำนวนเงิน (บาท)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="fw-bold">
+                <td>รายรับ (งบประมาณที่ได้รับ)</td>
+                <td class="text-end">${(budget.income || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr class="bg-light fw-bold">
+                <td colspan="2">รายจ่าย</td>
+              </tr>
+              <tr>
+                <td class="ps-4">1. ค่าตอบแทน (วิทยากร/อาสาสมัคร/ประสานงาน)</td>
+                <td class="text-end">${(budget.expenses?.[0] || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr>
+                <td class="ps-4">2. ค่าจ้าง (จัดทำข้อมูล/ทำของ)</td>
+                <td class="text-end">${(budget.expenses?.[1] || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr>
+                <td class="ps-4">3. ค่าใช้สอย (พาหนะ/ที่พัก/อาหาร/เช่าสถานที่)</td>
+                <td class="text-end">${(budget.expenses?.[2] || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr>
+                <td class="ps-4">4. ค่าวัสดุ (เครื่องเขียน/สำนักงาน/เผยแพร่)</td>
+                <td class="text-end">${(budget.expenses?.[3] || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr>
+                <td class="ps-4">5. ค่าสาธารณูปโภค (ไฟฟ้า/น้ำ/โทรศัพท์/ไปรษณีย์)</td>
+                <td class="text-end">${(budget.expenses?.[4] || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr>
+                <td class="ps-4">6. ค่าอื่นๆ</td>
+                <td class="text-end">${(budget.expenses?.[5] || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr class="bg-light fw-bold">
+                <td class="text-end">รวมรายจ่ายทั้งสิ้น</td>
+                <td class="text-end text-danger">${totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr class="table-warning fw-bold">
+                <td class="text-end">งบประมาณคงเหลือ (ยอดยกไป)</td>
+                <td class="text-end">${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const element = document.getElementById('pdf-template-container');
+    element.innerHTML = pdfContent;
+
+    const opt = {
+      margin: 10,
+      filename: `รายงานกิจกรรม_${e['ชื่อกิจกรรม'] || 'กิจกรรม'}_${new Date().toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        letterRendering: true
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'a4', 
+        orientation: 'portrait' 
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    html2pdf().set(opt).from(element).save();
   }
 
   function b64toBlob(b64Data, contentType = '', sliceSize = 512) {
