@@ -2179,6 +2179,8 @@
     const e = appData.events.find(item => (item.ID || item.id) === id) || (appData.approvedEvents && appData.approvedEvents.find(item => (item.ID || item.id) === id));
     if (!e) return;
 
+    const getVal = (key) => e[key] || e[key.toLowerCase()] || '';
+
     Swal.fire({
       title: 'กำลังสร้าง PDF...',
       html: 'กรุณารอสักครู่ ระบบกำลังจัดเตรียมเอกสาร',
