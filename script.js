@@ -2167,9 +2167,10 @@
    */
   function prepareThaiText(text) {
     if (!text) return '-';
+    // Insert Zero-Width Space (\u200B) between Thai characters to help pdfMake wrap words
+    // This is a simple regex that finds boundaries between Thai characters
     return text.replace(/([ก-๙])(?=[ก-๙])/g, '$1\u200B');
   }
-
 
   /**
    * Generate PDF for an Event using pdfMake
