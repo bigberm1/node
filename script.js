@@ -105,7 +105,71 @@
   }
 
   /**
-   * Render Events Table
+   * Render Events Table from local data (Optimistic UI support)
+   */
+  function renderEventsTable() {
+    const container = document.getElementById('event-table-body');
+    if (!container) return;
+
+    if (!appData.events || appData.events.length === 0) {
+      container.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">ไม่พบข้อมูลกิจกรรม</td></tr>';
+      return;
+    }
+
+    container.innerHTML = appData.events.map(e => {
+      const isApproved = e.approve && (e.approve.toString().toLowerCase() === 'true' || e.approve === 'TRUE');
+      const eventId = e.ID || e.id;
+      
+      let budgetAmount = '-';
+      try {
+        const b = typeof e['งบประมาณ'] === 'string' ? JSON.parse(e['งบประมาณ'] || '{}') : (e['งบประมาณ'] || {});
+        if (b.income) budgetAmount = '฿' + parseFloat(b.income).toLocaleString();
+      } catch(err) {}
+
+      return `
+        <tr>
+          <td class="ps-4">
+            <div class="fw-bold text-primary">${e['ชื่อกิจกรรม'] || '-'}</div>
+            <div class="small text-muted"><i class="bi bi-geo-alt me-1"></i>${e.village || '-'}</div>
+          </td>
+          <td>
+            <div class="fw-bold"><i class="bi bi-calendar3 me-2 text-primary"></i>${e['วันที่จัดกิจกรรม'] || '-'} | ${e['เวลาเริ่ม'] || '-'} - ${e['เวลาสิ้นสุด'] || '-'} น.</div>
+            <div class="small text-muted"><i class="bi bi-cash-stack me-2"></i>งบประมาณ: ${budgetAmount}</div>
+          </td>
+          <td><i class="bi bi-pin-map me-2 text-danger"></i>${e['สถานที่'] || '-'}</td>
+          <td><i class="bi bi-people me-2 text-info"></i>${e['กลุ่มเป้าหมาย'] || '-'}</td>
+          <td class="text-end pe-4">
+            <div class="d-flex justify-content-end gap-3">
+              <button class="btn btn-sm btn-light border py-1" onclick="generateEventPDF('${eventId}')" title="สร้าง PDF">
+                <i class="bi bi-file-earmark-pdf text-danger"></i>
+              </button>
+              <button class="btn btn-sm btn-light border py-1" onclick="openPreviewModal('${eventId}')" title="ดูรายละเอียดกิจกรรม">
+                <i class="bi bi-eye text-primary"></i>
+              </button>
+              ${!isApproved ? `
+                <button class="btn btn-sm btn-light border py-1" onclick="openEventModal('${eventId}')" title="แก้ไข">
+                  <i class="bi bi-pencil-square text-primary"></i>
+                </button>
+                <button class="btn btn-sm btn-light border py-1" onclick="handleDeleteEvent('${eventId}')" title="ลบ">
+                  <i class="bi bi-trash3 text-danger"></i>
+                </button>
+                <button class="btn btn-sm btn-primary-th px-3 py-1" onclick="handleApproveEvent('${eventId}', event)">
+                  <i class="bi bi-check-circle me-1"></i> ยืนยัน
+                </button>
+              ` : `
+                <span class="badge rounded-pill bg-success-subtle text-success border border-success px-3 py-2">
+                  <i class="bi bi-shield-check me-1"></i> ยืนยันข้อมูลแล้ว
+                </span>
+              `}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  /**
+   * Fetch Events from Server
    */
   async function renderEvents() {
     if (!window.currentUser) return;
@@ -113,7 +177,10 @@
     const container = document.getElementById('event-table-body');
     if (!container) return;
 
-    container.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+    // Only show spinner if we don't have data yet (to avoid flickering with Optimistic UI)
+    if (!appData.events || appData.events.length === 0) {
+      container.innerHTML = '<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+    }
 
     try {
       const formData = new URLSearchParams();
@@ -127,64 +194,13 @@
 
       const data = await response.json();
       appData.events = data.events || [];
-      
-      if (appData.events.length === 0) {
-        container.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">ไม่พบข้อมูลกิจกรรม</td></tr>';
-        return;
-      }
-
-      container.innerHTML = appData.events.map(e => {
-        const isApproved = e.approve && (e.approve.toString().toLowerCase() === 'true' || e.approve === 'TRUE');
-        const eventId = e.ID || e.id; // Support both just in case
-        
-        let budgetAmount = '-';
-        try {
-          const b = JSON.parse(e['งบประมาณ'] || '{}');
-          if (b.income) budgetAmount = '฿' + parseFloat(b.income).toLocaleString();
-        } catch(err) {}
-
-        return `
-          <tr>
-            <td class="ps-4">
-              <div class="fw-bold text-primary">${e['ชื่อกิจกรรม'] || '-'}</div>
-              <div class="small text-muted"><i class="bi bi-geo-alt me-1"></i>${e.village || '-'}</div>
-            </td>
-            <td>
-              <div class="fw-bold"><i class="bi bi-calendar3 me-2 text-primary"></i>${e['วันที่จัดกิจกรรม'] || '-'} | ${e['เวลาเริ่ม'] || '-'} - ${e['เวลาสิ้นสุด'] || '-'} น.</div>
-              <div class="small text-muted"><i class="bi bi-cash-stack me-2"></i>งบประมาณ: ${budgetAmount}</div>
-            </td>
-            <td><i class="bi bi-pin-map me-2 text-danger"></i>${e['สถานที่'] || '-'}</td>
-            <td><i class="bi bi-people me-2 text-info"></i>${e['กลุ่มเป้าหมาย'] || '-'}</td>
-            <td class="text-end pe-4">
-              <div class="d-flex justify-content-end gap-3">
-                <button class="btn btn-sm btn-light border py-1" onclick="generateEventPDF('${eventId}')" title="สร้าง PDF">
-                  <i class="bi bi-file-earmark-pdf text-danger"></i>
-                </button>
-                <button class="btn btn-sm btn-light border py-1" onclick="openPreviewModal('${eventId}')" title="ดูรายละเอียดกิจกรรม">
-                  <i class="bi bi-eye text-primary"></i>
-                </button>
-                ${!isApproved ? `
-                  <button class="btn btn-sm btn-light border py-1" onclick="openEventModal('${eventId}')" title="แก้ไข">
-                    <i class="bi bi-pencil-square text-primary"></i>
-                  </button>
-                  <button class="btn btn-sm btn-light border py-1" onclick="handleDeleteEvent('${eventId}')" title="ลบ">
-                    <i class="bi bi-trash3 text-danger"></i>
-                  </button>
-                  <button class="btn btn-sm btn-primary-th px-3 py-1" onclick="handleApproveEvent('${eventId}', event)">
-                    <i class="bi bi-check-circle me-1"></i> ยืนยัน
-                  </button>
-                ` : `
-                  <span class="badge rounded-pill bg-success-subtle text-success border border-success px-3 py-2">
-                    <i class="bi bi-shield-check me-1"></i> ยืนยันข้อมูลแล้ว
-                  </span>
-                `}
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
+      renderEventsTable();
     } catch (err) {
-      Swal.fire('Error', err.message, 'error');
+      console.error('Fetch events error:', err);
+      // If we already have data, don't show error, just keep current UI
+      if (!appData.events || appData.events.length === 0) {
+        container.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+      }
     }
   }
 
@@ -567,11 +583,19 @@
       'งบประมาณ': JSON.stringify(budgetData)
     };
 
-    Swal.fire({
-      title: 'กำลังบันทึก...',
-      allowOutsideClick: false,
-      didOpen: () => Swal.showLoading()
-    });
+    // Optimistic UI: Update local data immediately
+    const isNew = !id;
+    const tempId = id || 'temp-' + Date.now();
+    const optimisticEvent = { ...eventData, ID: tempId, village: window.currentUser.village };
+    
+    if (isNew) {
+      appData.events = [optimisticEvent, ...(appData.events || [])];
+    } else {
+      appData.events = appData.events.map(e => (e.ID || e.id) === id ? optimisticEvent : e);
+    }
+    
+    renderEventsTable();
+    bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
 
     try {
       const formData = new URLSearchParams();
@@ -587,13 +611,29 @@
       const res = await response.json();
       
       if (res.success) {
-        bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
-        Swal.fire('สำเร็จ', res.message, 'success');
-        renderEvents();
+        // Update the temp ID with real ID if new
+        if (isNew && res.event) {
+          appData.events = appData.events.map(e => e.ID === tempId ? res.event : e);
+          renderEventsTable();
+        }
+        const Toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true
+        });
+        Toast.fire({
+          icon: 'success',
+          title: res.message
+        });
       } else {
+        // Rollback on error
+        renderEvents(); 
         Swal.fire('เกิดข้อผิดพลาด', res.message, 'error');
       }
     } catch (err) {
+      renderEvents(); // Rollback
       Swal.fire('Error', err.message, 'error');
     }
   }
@@ -613,6 +653,11 @@
       cancelButtonText: 'ยกเลิก'
     }).then(async (result) => {
       if (result.isConfirmed) {
+        // Optimistic UI: Remove from local data immediately
+        const originalEvents = [...appData.events];
+        appData.events = appData.events.filter(e => (e.ID || e.id) !== id);
+        renderEventsTable();
+
         try {
           const formData = new URLSearchParams();
           formData.append('action', 'deleteEvent');
@@ -627,12 +672,27 @@
           const res = await response.json();
           
           if (res.success) {
-            Swal.fire('ลบแล้ว!', res.message, 'success');
-            renderEvents();
+            const Toast = Swal.mixin({
+              toast: true,
+              position: 'top-end',
+              showConfirmButton: false,
+              timer: 2000,
+              timerProgressBar: true
+            });
+            Toast.fire({
+              icon: 'success',
+              title: res.message
+            });
           } else {
+            // Rollback on error
+            appData.events = originalEvents;
+            renderEventsTable();
             Swal.fire('Error', res.message, 'error');
           }
         } catch (err) {
+          // Rollback on error
+          appData.events = originalEvents;
+          renderEventsTable();
           Swal.fire('Error', err.message, 'error');
         }
       }
@@ -651,11 +711,15 @@
       cancelButtonText: 'ยกเลิก'
     }).then(async (result) => {
       if (result.isConfirmed) {
-        // หาปุ่มที่ถูกกดและเปลี่ยนสถานะ
-        const btn = event.target.closest('button');
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> กำลังยืนยัน...';
+        // Optimistic UI: Update local data immediately
+        const originalEvents = JSON.parse(JSON.stringify(appData.events));
+        appData.events = appData.events.map(e => {
+          if ((e.ID || e.id) === id) {
+            return { ...e, approve: true };
+          }
+          return e;
+        });
+        renderEventsTable();
 
         try {
           const formData = new URLSearchParams();
@@ -675,26 +739,23 @@
               toast: true,
               position: "top-end",
               showConfirmButton: false,
-              timer: 3000,
-              timerProgressBar: true,
-              didOpen: (toast) => {
-                toast.onmouseenter = Swal.stopTimer;
-                toast.onmouseleave = Swal.resumeTimer;
-              }
+              timer: 2000,
+              timerProgressBar: true
             });
             Toast.fire({
               icon: "success",
               title: "ยืนยันข้อมูลสำเร็จ"
             });
-            renderEvents();
           } else {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
+            // Rollback on error
+            appData.events = originalEvents;
+            renderEventsTable();
             Swal.fire('Error', res.message, 'error');
           }
         } catch (err) {
-          btn.disabled = false;
-          btn.innerHTML = originalHtml;
+          // Rollback on error
+          appData.events = originalEvents;
+          renderEventsTable();
           Swal.fire('Error', err.message, 'error');
         }
       }
@@ -724,13 +785,35 @@
    * Initialize Application
    */
   async function initApp() {
-    // Show loading
-    // document.getElementById('loading-overlay').style.display = 'flex';
+    // 1. Caching: Try to load from localStorage first for instant display
+    const cachedData = localStorage.getItem('appData_cache');
+    if (cachedData) {
+      try {
+        appData = JSON.parse(cachedData);
+        populateFilters();
+        renderHome();
+        renderProjects();
+        renderDashboard();
+        renderNews();
+        renderKnowledge();
+        renderAbout();
+        
+        // If logged in, also render events from cache
+        if (window.currentUser) {
+          renderEventsTable();
+        }
+      } catch (e) {
+        console.error('Error parsing cached data', e);
+      }
+    }
 
-    // Fetch Data from Server
+    // 2. Fetch Fresh Data from Server in background
     try {
       const formData = new URLSearchParams();
       formData.append('action', 'getAppData');
+      if (window.currentUser) {
+        formData.append('user', JSON.stringify(window.currentUser));
+      }
 
       const response = await fetch(GAS_WEB_APP_URL, {
         method: 'POST',
@@ -739,27 +822,32 @@
 
       const data = await response.json();
       appData = data;
+      
+      // Update cache
+      localStorage.setItem('appData_cache', JSON.stringify(appData));
+      
       populateFilters();
       renderHome();
-      
-      // Hide loading after a small delay for smooth transition
-      // setTimeout(() => {
-      //   document.getElementById('loading-overlay').style.display = 'none';
-      // }, 800);
-
       renderProjects();
       renderDashboard();
       renderNews();
       renderKnowledge();
       renderAbout();
+      
+      if (window.currentUser) {
+        renderEventsTable();
+      }
     } catch (err) {
       console.error('Failed to load data:', err);
-      Swal.fire({
-        icon: 'error',
-        title: 'เกิดข้อผิดพลาด',
-        text: 'ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
-        confirmButtonColor: '#039780'
-      });
+      // Only show error if we have no cached data at all
+      if (!cachedData) {
+        Swal.fire({
+          icon: 'error',
+          title: 'เกิดข้อผิดพลาด',
+          text: 'ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
+          confirmButtonColor: '#039780'
+        });
+      }
     }
   }
 
