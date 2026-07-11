@@ -760,16 +760,14 @@
             box-sizing: border-box;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            word-break: break-word;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
           }
           body {
             padding: 20mm;
             font-size: 21.33px; /* เทียบเท่าขนาด 16pt ใน MS Word */
-            line-height: 1.5;
+            line-height: 1.6;
             background-color: white;
             color: #333;
+            letter-spacing: 0.05px;
           }
           .header {
             text-align: center;
@@ -892,12 +890,12 @@
 
         <div class="section">
           <div class="section-title">รายละเอียดกิจกรรม</div>
-          <div style="white-space: pre-wrap; line-height: 1.6; background: transparent !important; border: none !important; padding: 0; margin: 0; text-align: justify; text-justify: inter-character;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
+          <div style="white-space: pre-wrap; line-height: 1.6; background: transparent !important; border: none !important; padding: 0; margin: 0; text-align: left; word-break: normal;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
         </div>
 
         <div class="section">
           <div class="section-title">ผลที่เกิดขึ้นจากการทำกิจกรรม</div>
-          <div style="white-space: pre-wrap; line-height: 1.6; background: transparent !important; border: none !important; padding: 0; margin: 0; text-align: justify; text-justify: inter-character;">${getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '-'}</div>
+          <div style="white-space: pre-wrap; line-height: 1.6; background: transparent !important; border: none !important; padding: 0; margin: 0; text-align: left; word-break: normal;">${getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '-'}</div>
         </div>
 
         ${([1,2,3,4].some(i => getVal(`ภาพกิจกรรม${i}`))) ? `
@@ -980,10 +978,12 @@
       filename: `รายงานกิจกรรม_${e['ชื่อกิจกรรม'] || 'กิจกรรม'}_${new Date().toISOString().split('T')[0]}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { 
-        scale: 2,
+        scale: 3,
         useCORS: true,
-        letterRendering: false,
-        logging: false
+        letterRendering: true,
+        logging: false,
+        scrollX: 0,
+        scrollY: 0
       },
       jsPDF: { 
         unit: 'mm', 
@@ -993,7 +993,14 @@
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
-    html2pdf().set(opt).from(element).save();
+    // Ensure fonts are loaded before generating PDF
+    if (document.fonts) {
+      document.fonts.ready.then(() => {
+        html2pdf().set(opt).from(element).save();
+      });
+    } else {
+      html2pdf().set(opt).from(element).save();
+    }
   }
 
   function b64toBlob(b64Data, contentType = '', sliceSize = 512) {
