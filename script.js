@@ -2163,7 +2163,7 @@
   }
 
   /**
-   * Generate PDF for an Event
+   * Generate PDF for an Event using pdfMake
    */
   async function generateEventPDF(id) {
     const e = appData.events.find(item => (item.ID || item.id) === id) || (appData.approvedEvents && appData.approvedEvents.find(item => (item.ID || item.id) === id));
@@ -2177,11 +2177,17 @@
     });
 
     try {
-      // รอให้ฟอนต์โหลดเสร็จสมบูรณ์ และหน่วงเวลาเล็กน้อยเพื่อให้ Canvas พร้อม
-      await document.fonts.ready;
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 1. Configure Fonts for pdfMake
+      pdfMake.fonts = {
+        THSarabunNew: {
+          normal: 'https://sanwithz.github.io/font/THSarabunNew.ttf',
+          bold: 'https://sanwithz.github.io/font/THSarabunNewBold.ttf',
+          italics: 'https://sanwithz.github.io/font/THSarabunNewItalic.ttf',
+          bolditalics: 'https://sanwithz.github.io/font/THSarabunNewBoldItalic.ttf'
+        }
+      };
 
-      // 1. Prepare Budget Data
+      // 2. Prepare Budget Data
       let budget = { income: 0, expenses: [0, 0, 0, 0, 0, 0] };
       try {
         budget = JSON.parse(e['งบประมาณ'] || '{}');
@@ -2199,152 +2205,168 @@
       ];
 
       let totalExpenses = 0;
-      let expensesRows = '';
+      const budgetRows = [
+        [
+          { text: 'รายการ', style: 'tableHeader' },
+          { text: 'จำนวนเงิน', style: 'tableHeader', alignment: 'right' }
+        ],
+        [
+          { text: 'รายรับ (งบประมาณที่ได้รับ)', bold: true },
+          { text: '฿' + income.toLocaleString(undefined, { minimumFractionDigits: 2 }), alignment: 'right', color: '#198754', bold: true }
+        ]
+      ];
+
       expenseLabels.forEach((label, i) => {
         const amount = parseFloat(expenses[i]) || 0;
         totalExpenses += amount;
         if (amount > 0) {
-          expensesRows += `
-            <tr>
-              <td style="padding: 8px; border: 1px solid #dee2e6; font-size: 14px;">${label}</td>
-              <td style="padding: 8px; border: 1px solid #dee2e6; text-align: right; font-size: 14px;">฿${amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-            </tr>
-          `;
+          budgetRows.push([
+            { text: label, fontSize: 14, margin: [10, 0, 0, 0] },
+            { text: '฿' + amount.toLocaleString(undefined, { minimumFractionDigits: 2 }), alignment: 'right', fontSize: 14 }
+          ]);
         }
       });
-      const balance = income - totalExpenses;
 
-      // 2. Prepare Images
-      let imagesHtml = '';
+      const balance = income - totalExpenses;
+      budgetRows.push([
+        { text: 'รวมรายจ่ายทั้งหมด', alignment: 'right', bold: true, fillColor: '#f8f9fa' },
+        { text: '฿' + totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2 }), alignment: 'right', color: '#dc3545', bold: true, fillColor: '#f8f9fa' }
+      ]);
+      budgetRows.push([
+        { text: 'คงเหลือ', alignment: 'right', bold: true, fillColor: '#e9ecef' },
+        { text: '฿' + balance.toLocaleString(undefined, { minimumFractionDigits: 2 }), alignment: 'right', color: '#0d6efd', bold: true, fillColor: '#e9ecef' }
+      ]);
+
+      // 3. Prepare Images
+      const imageContent = [];
+      const imagesPerRow = 2;
+      let currentRow = [];
+      
       for (let i = 1; i <= 4; i++) {
         const img = e[`ภาพกิจกรรม${i}`];
         if (img) {
-          imagesHtml += `
-            <div style="width: 48%; margin-bottom: 20px; display: inline-block; vertical-align: top; text-align: center; margin-right: 1%;">
-              <img src="${img}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 10px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-              <div style="font-size: 12px; color: #777; margin-top: 8px;">ภาพประกอบที่ ${i}</div>
-            </div>
-          `;
+          currentRow.push({
+            stack: [
+              { image: img, width: 240, height: 160, margin: [0, 5, 0, 5] },
+              { text: `ภาพประกอบที่ ${i}`, fontSize: 10, color: '#777', alignment: 'center' }
+            ],
+            margin: [5, 5, 5, 15]
+          });
+          
+          if (currentRow.length === imagesPerRow) {
+            imageContent.push({ columns: currentRow, columnGap: 10 });
+            currentRow = [];
+          }
         }
       }
+      if (currentRow.length > 0) {
+        imageContent.push({ columns: currentRow, columnGap: 10 });
+      }
 
-      // 3. Create PDF Content with Beautiful Styling
-      const element = document.createElement('div');
-      element.style.width = '680px';
-      element.style.padding = '30px';
-      element.style.backgroundColor = '#fff';
-      element.style.fontFamily = "'Sarabun', sans-serif";
-      element.style.color = '#333';
-      element.style.textRendering = "geometricPrecision"; // เพิ่มความแม่นยำในการวาดตัวอักษร
-
-      element.innerHTML = `
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600&display=swap');
-          * { 
-            font-family: 'Sarabun', sans-serif !important; 
-            -webkit-font-smoothing: antialiased;
-            text-rendering: optimizeLegibility;
-            letter-spacing: 0px !important;
-          }
-          .pdf-header {
-            font-weight: 600 !important; /* ใช้ 600 แทน bold (700) เพื่อลดปัญหาการเรนเดอร์สระ/วรรณยุกต์เพี้ยน */
-            line-height: 1.4 !important;
-          }
-        </style>
-        <div style="text-align: center; border-bottom: 4px solid #039780; padding-bottom: 20px; margin-bottom: 30px;">
-          <div class="pdf-header" style="color: #039780; margin-bottom: 5px; font-size: 28px;">รายงานสรุปผลการจัดกิจกรรม</div>
-          <div style="color: #666; font-size: 16px;">หน่วยจัดการจังหวัดเชียงราย (Node มุ่งเป้า สสส.)</div>
-        </div>
-
-        <div style="margin-bottom: 25px;">
-          <div class="pdf-header" style="color: #039780; border-left: 5px solid #F7A072; padding-left: 10px; margin-bottom: 15px; font-size: 20px;">1. ข้อมูลทั่วไป</div>
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="width: 25%; font-weight: 600; color: #555; padding: 8px 0;">ชื่อกิจกรรม:</td>
-              <td style="width: 75%; padding: 8px 0; border-bottom: 1px dashed #eee;">${e['ชื่อกิจกรรม'] || '-'}</td>
-            </tr>
-            <tr>
-              <td style="font-weight: 600; color: #555; padding: 8px 0;">วันและเวลา:</td>
-              <td style="padding: 8px 0; border-bottom: 1px dashed #eee;">${toThaiDate(e['วันที่จัดกิจกรรม'])} | ${e['เวลาเริ่ม'] || '-'} - ${e['เวลาสิ้นสุด'] || '-'} น.</td>
-            </tr>
-            <tr>
-              <td style="font-weight: 600; color: #555; padding: 8px 0;">สถานที่:</td>
-              <td style="padding: 8px 0; border-bottom: 1px dashed #eee;">${e['สถานที่'] || '-'}</td>
-            </tr>
-            <tr>
-              <td style="font-weight: 600; color: #555; padding: 8px 0;">ชุมชน/หมู่บ้าน:</td>
-              <td style="padding: 8px 0; border-bottom: 1px dashed #eee;">${e.village || '-'}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div style="margin-bottom: 25px;">
-          <div class="pdf-header" style="color: #039780; border-left: 5px solid #F7A072; padding-left: 10px; margin-bottom: 10px; font-size: 20px;">2. รายละเอียดกิจกรรม</div>
-          <div style="background-color: #fcfcfc; padding: 15px; border-radius: 8px; line-height: 1.6; border: 1px solid #f0f0f0; white-space: pre-wrap;">${e['รายละเอียดกิจกรรม'] || '-'}</div>
-        </div>
-
-        <div style="margin-bottom: 25px;">
-          <div class="pdf-header" style="color: #039780; border-left: 5px solid #F7A072; padding-left: 10px; margin-bottom: 10px; font-size: 20px;">3. ผลที่เกิดขึ้น</div>
-          <div style="background-color: #fcfcfc; padding: 15px; border-radius: 8px; line-height: 1.6; border: 1px solid #f0f0f0; white-space: pre-wrap;">${e['ผลที่เกิดขึ้นจากการทำกิจกรรม'] || '-'}</div>
-        </div>
-
-        <!-- บังคับขึ้นหน้าใหม่ถ้าข้อมูลก่อนหน้ายาวเกินไป หรือป้องกันการตัดกลางตาราง -->
-        <div style="page-break-before: auto; margin-bottom: 25px;">
-          <div class="pdf-header" style="color: #039780; border-left: 5px solid #F7A072; padding-left: 10px; margin-bottom: 15px; font-size: 20px;">4. สรุปงบประมาณ</div>
-          <table style="width: 100%; border-collapse: collapse; border: 1px solid #dee2e6;">
-            <thead>
-              <tr style="background-color: #039780; color: #fff;">
-                <th style="padding: 10px; text-align: left; border: 1px solid #039780;">รายการ</th>
-                <th style="padding: 10px; text-align: right; width: 150px; border: 1px solid #039780;">จำนวนเงิน</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="padding: 10px; border: 1px solid #dee2e6; font-weight: 600;">รายรับ (งบประมาณที่ได้รับ)</td>
-                <td style="padding: 10px; border: 1px solid #dee2e6; text-align: right; color: #198754; font-weight: 600;">฿${income.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-              </tr>
-              ${expensesRows || '<tr><td colspan="2" style="padding: 10px; text-align: center; color: #999;">ไม่มีข้อมูลรายจ่าย</td></tr>'}
-              <tr style="background-color: #f8f9fa;">
-                <td style="padding: 10px; border: 1px solid #dee2e6; text-align: right; font-weight: 600;">รวมรายจ่ายทั้งหมด</td>
-                <td style="padding: 10px; border: 1px solid #dee2e6; text-align: right; color: #dc3545; font-weight: 600;">฿${totalExpenses.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-              </tr>
-              <tr style="background-color: #e9ecef; font-weight: 600;">
-                <td style="padding: 10px; border: 1px solid #dee2e6; text-align: right;">คงเหลือ</td>
-                <td style="padding: 10px; border: 1px solid #dee2e6; text-align: right; color: #0d6efd;">฿${balance.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div style="page-break-before: always; padding-top: 20px;">
-          <div class="pdf-header" style="color: #039780; border-left: 5px solid #F7A072; padding-left: 10px; margin-bottom: 20px; font-size: 20px;">5. ภาพบรรยากาศกิจกรรม</div>
-          <div style="width: 100%; text-align: center;">
-            ${imagesHtml || '<p style="color: #999;">ไม่มีภาพประกอบกิจกรรม</p>'}
-          </div>
-        </div>
-
-        <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 15px; text-align: right; font-size: 12px; color: #999;">
-          <p>เอกสารนี้สร้างโดยระบบอัตโนมัติ เมื่อวันที่ ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} น.</p>
-        </div>
-      `;
-
-      // 4. PDF Generation Options
-      const opt = {
-        margin: [10, 10, 10, 10],
-        filename: `รายงาน_${e['ชื่อกิจกรรม'] || 'กิจกรรม'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true, 
-          letterRendering: true, // กลับมาเปิดตัวนี้เพื่อช่วยเรื่องการจัดตำแหน่งตัวอักษรไทยบางกรณี
-          logging: false,
-          width: 700
+      // 4. Define Document Definition
+      const docDefinition = {
+        pageSize: 'A4',
+        pageMargins: [40, 40, 40, 40],
+        defaultStyle: {
+          font: 'THSarabunNew',
+          fontSize: 16
         },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        styles: {
+          headerTitle: {
+            fontSize: 28,
+            bold: true,
+            color: '#039780',
+            alignment: 'center',
+            margin: [0, 0, 0, 5]
+          },
+          headerSubtitle: {
+            fontSize: 16,
+            color: '#666',
+            alignment: 'center',
+            margin: [0, 0, 0, 20]
+          },
+          sectionTitle: {
+            fontSize: 20,
+            bold: true,
+            color: '#039780',
+            margin: [0, 15, 0, 10]
+          },
+          label: {
+            bold: true,
+            color: '#555'
+          },
+          contentBox: {
+            margin: [0, 5, 0, 15],
+            lineHeight: 1.4
+          },
+          tableHeader: {
+            bold: true,
+            fontSize: 16,
+            color: 'white',
+            fillColor: '#039780',
+            margin: [0, 5, 0, 5]
+          }
+        },
+        content: [
+          // Header
+          { text: 'รายงานสรุปผลการจัดกิจกรรม', style: 'headerTitle' },
+          { text: 'หน่วยจัดการจังหวัดเชียงราย (Node มุ่งเป้า สสส.)', style: 'headerSubtitle' },
+          { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 2, strokeColor: '#039780' }] },
+
+          // Section 1: ข้อมูลทั่วไป
+          { text: '1. ข้อมูลทั่วไป', style: 'sectionTitle' },
+          {
+            table: {
+              widths: [120, '*'],
+              body: [
+                [{ text: 'ชื่อกิจกรรม:', style: 'label' }, { text: e['ชื่อกิจกรรม'] || '-', border: [false, false, false, true] }],
+                [{ text: 'วันและเวลา:', style: 'label' }, { text: `${toThaiDate(e['วันที่จัดกิจกรรม'])} | ${e['เวลาเริ่ม'] || '-'} - ${e['เวลาสิ้นสุด'] || '-'} น.`, border: [false, false, false, true] }],
+                [{ text: 'สถานที่:', style: 'label' }, { text: e['สถานที่'] || '-', border: [false, false, false, true] }],
+                [{ text: 'ชุมชน/หมู่บ้าน:', style: 'label' }, { text: e.village || '-', border: [false, false, false, true] }]
+              ]
+            },
+            layout: 'noBorders',
+            margin: [0, 0, 0, 20]
+          },
+
+          // Section 2: รายละเอียดกิจกรรม
+          { text: '2. รายละเอียดกิจกรรม', style: 'sectionTitle' },
+          { text: e['รายละเอียดกิจกรรม'] || '-', style: 'contentBox' },
+
+          // Section 3: ผลที่เกิดขึ้น
+          { text: '3. ผลที่เกิดขึ้น', style: 'sectionTitle' },
+          { text: e['ผลที่เกิดขึ้นจากการทำกิจกรรม'] || '-', style: 'contentBox' },
+
+          // Section 4: สรุปงบประมาณ
+          { text: '4. สรุปงบประมาณ', style: 'sectionTitle' },
+          {
+            table: {
+              headerRows: 1,
+              widths: ['*', 150],
+              body: budgetRows
+            },
+            layout: {
+              hLineWidth: function (i, node) { return 1; },
+              vLineWidth: function (i, node) { return 1; },
+              hLineColor: function (i, node) { return '#dee2e6'; },
+              vLineColor: function (i, node) { return '#dee2e6'; }
+            }
+          },
+
+          // Section 5: ภาพประกอบ
+          imageContent.length > 0 ? { text: '5. ภาพบรรยากาศกิจกรรม', style: 'sectionTitle', pageBreak: 'before' } : '',
+          ...imageContent,
+
+          // Footer
+          {
+            text: `เอกสารนี้สร้างโดยระบบอัตโนมัติ เมื่อวันที่ ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} น.`,
+            style: { fontSize: 10, color: '#999', alignment: 'right', margin: [0, 50, 0, 0] }
+          }
+        ]
       };
 
-      // 5. Generate and Download
-      await html2pdf().set(opt).from(element).save();
+      // 5. Generate and Open PDF
+      pdfMake.createPdf(docDefinition).open();
       
       Swal.close();
       const Toast = Swal.mixin({
