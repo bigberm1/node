@@ -1,5 +1,5 @@
   // TODO: Replace this with your actual GAS Web App URL after deployment
-  const GAS_WEB_APP_URL = 'YOUR_GAS_WEB_APP_URL_HERE';
+  const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxmRK93fER7nIibHHNuO42RJ0T-7EYDAe1JhJVvLdr7D34yrNF3gPL9yve6Yuqq7-yR/exec';
 
   let appData = {
     projects: [],
