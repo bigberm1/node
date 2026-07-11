@@ -760,12 +760,16 @@
             box-sizing: border-box;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            word-break: break-word;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
           }
           body {
-            padding: 20px;
-            font-size: 14px;
-            line-height: 1.6;
+            padding: 20mm;
+            font-size: 21.33px; /* เทียบเท่าขนาด 16pt ใน MS Word */
+            line-height: 1.5;
             background-color: white;
+            color: #333;
           }
           .header {
             text-align: center;
@@ -776,15 +780,15 @@
           .header h1 {
             color: #039780;
             margin: 0 0 10px 0;
-            font-size: 24px;
+            font-size: 32px;
           }
           .header p {
             color: #666;
             margin: 0;
-            font-size: 14px;
+            font-size: 21.33px;
           }
           .section {
-            margin-bottom: 20px;
+            margin-bottom: 30px;
           }
           .section.no-break {
             page-break-inside: avoid;
@@ -792,17 +796,17 @@
           .section-title {
             font-weight: bold;
             color: #039780;
-            border-left: 4px solid #ED7E23;
-            padding-left: 10px;
-            margin-bottom: 15px;
-            font-size: 16px;
+            border-left: 5px solid #ED7E23;
+            padding-left: 15px;
+            margin-bottom: 20px;
+            font-size: 24px;
           }
           .info-row {
             display: flex;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
           }
           .info-label {
-            width: 180px;
+            width: 220px;
             font-weight: bold;
             color: #666;
           }
@@ -812,8 +816,9 @@
           table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 15px;
             page-break-inside: avoid;
+            font-size: 18px; /* ตารางเล็กลงนิดหน่อยเพื่อให้พอดีหน้า */
           }
           th, td {
             border: 1px solid #ddd;
@@ -887,12 +892,12 @@
 
         <div class="section">
           <div class="section-title">รายละเอียดกิจกรรม</div>
-          <div style="white-space: pre-wrap; line-height: 1.8; background: transparent !important; border: none !important; padding: 0; margin: 0; letter-spacing: 0.1px;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
+          <div style="white-space: pre-wrap; line-height: 1.6; background: transparent !important; border: none !important; padding: 0; margin: 0; text-align: justify; text-justify: inter-character;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
         </div>
 
         <div class="section">
           <div class="section-title">ผลที่เกิดขึ้นจากการทำกิจกรรม</div>
-          <div style="white-space: pre-wrap; line-height: 1.8; background: transparent !important; border: none !important; padding: 0; margin: 0; letter-spacing: 0.1px;">${getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '-'}</div>
+          <div style="white-space: pre-wrap; line-height: 1.6; background: transparent !important; border: none !important; padding: 0; margin: 0; text-align: justify; text-justify: inter-character;">${getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '-'}</div>
         </div>
 
         ${([1,2,3,4].some(i => getVal(`ภาพกิจกรรม${i}`))) ? `
