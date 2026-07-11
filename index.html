@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Node มุ่งเป้า (สสส.) จังหวัดเชียงราย</title>
+
+  <!-- CSS Libraries -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Kanit:wght@100;200;300;400;500;600&family=Sarabun:wght@300;400;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="javascript:void(0)">
+        <img src="https://www.thaihealth.or.th/logo.png" style="height:45px;">
+
+        <div class="vr mx-3 d-none d-sm-block" style="height: 50px; border-width: 2px; opacity: 0.3;"></div>
+
+        <div class="d-none d-sm-block">
+          <div style="font-weight:700; font-size:1.25rem; color:var(--primary);">Node มุ่งเป้า</div>
+          <div style="font-size:0.9rem; letter-spacing: 1px;">จังหวัดเชียงราย</div>
+        </div>
+      </a>
+
+
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto align-items-center">
+          <li class="nav-item"><a class="nav-link active" href="#"
+              onclick="showPage('home'); return false;">หน้าหลัก</a>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('projects'); return false;">โครงการ</a>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('news'); return false;">ข่าวสาร</a>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="#"
+              onclick="showPage('knowledge'); return false;">สื่อสร้างสุข</a>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="#"
+              onclick="showPage('dashboard'); return false;">แดชบอร์ด</a>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="#"
+              onclick="showPage('about'); return false;">เกี่ยวกับเรา</a>
+          </li>
+          <li class="nav-item d-none" id="nav-event-record">
+            <a class="nav-link" href="#" onclick="showPage('event-record'); return false;">บันทึกกิจกรรม</a>
+          </li>
+          <li class="nav-item ms-lg-3 mt-3 mt-lg-0" id="nav-login-btn">
+            <a class="btn btn-primary-th" href="#" onclick="showPage('login'); return false;">เข้าสู่ระบบ</a>
+          </li>
+          <li class="nav-item ms-lg-3 mt-3 mt-lg-0 d-none" id="nav-user-menu">
+            <a class="btn btn-secondary-th" href="#" onclick="logout(); return false;">
+              <i class="bi bi-box-arrow-right me-2"></i>ออกจากระบบ
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGE: LOGIN -->
+  <main id="login" class="page-content">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-5">
+          <div class="card-th p-4 p-md-5">
+            <div class="text-center mb-4">
+              <img src="https://www.thaihealth.or.th/logo.png" style="height:60px;" class="mb-3">
+              <h4>เข้าสู่ระบบ</h4>
+              <p class="text-muted">สำหรับเจ้าหน้าที่ Node มุ่งเป้า</p>
+            </div>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+              <div class="mb-3">
+                <label class="form-label">ชื่อผู้ใช้งาน</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-transparent"><i class="bi bi-person"></i></span>
+                  <input type="text" id="username" class="form-control" required placeholder="Username">
+                </div>
+              </div>
+              <div class="mb-4">
+                <label class="form-label">รหัสผ่าน</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-transparent"><i class="bi bi-lock"></i></span>
+                  <input type="password" id="password" class="form-control" required placeholder="Password">
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary-th w-100 py-3">
+                <i class="bi bi-box-arrow-in-right me-2"></i> เข้าสู่ระบบ
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- PAGE: EVENT RECORD -->
+  <main id="event-record" class="page-content">
+    <div class="container">
+      <!-- User Info Card Modern -->
+      <div class="user-profile-header mb-5">
+        <div class="row g-0 align-items-stretch">
+          <div class="col-md-8">
+            <div class="profile-info-main">
+              <div class="profile-icon">
+                <i class="bi bi-person-badge"></i>
+              </div>
+              <div class="profile-details">
+                <h4 id="info-fullname">กำลังโหลดข้อมูล...</h4>
+                <div class="profile-meta">
+                  <span class="meta-item"><i class="bi bi-geo-alt"></i> ชุมชน: <strong id="info-village">-</strong></span>
+                  <span class="meta-item"><i class="bi bi-shield-check"></i> สิทธิ์: <strong id="info-role">-</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 d-flex align-items-center justify-content-center justify-content-md-end p-4 pe-md-5">
+            <button class="btn btn-primary-th rounded-pill shadow-sm px-4" onclick="openEventModal()">
+              <i class="bi bi-plus-circle-fill me-2"></i>เพิ่มกิจกรรมใหม่
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title-wrap mb-4">
+        <h2 class="section-title-th">บันทึกผลการจัดกิจกรรม</h2>
+        <div class="section-subtitle">จัดการข้อมูลกิจกรรมและสรุปผลการดำเนินงานในพื้นที่ของคุณ</div>
+      </div>
+
+      <div class="card-th p-0 overflow-hidden">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+              <tr>
+                <th class="ps-4">ชื่อกิจกรรม</th>
+                <th>วันที่/เวลา</th>
+                <th>สถานที่</th>
+                <th>กลุ่มเป้าหมาย</th>
+                <th class="text-end pe-4">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="event-table-body">
+              <!-- Events will be injected here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Event Modal -->
+  <div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header bg-primary-th text-white py-3">
+          <h5 class="modal-title" id="eventModalTitle">บันทึกกิจกรรม</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="eventForm">
+            <input type="hidden" id="event-id">
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="form-label fw-bold">ชื่อกิจกรรม</label>
+                <input type="text" class="form-control" id="event-name" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold">วันที่จัดกิจกรรม</label>
+                <input type="date" class="form-control" id="event-date" required>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label fw-bold">เวลาเริ่ม</label>
+                <input type="time" class="form-control" id="event-start-time">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label fw-bold">เวลาสิ้นสุด</label>
+                <input type="time" class="form-control" id="event-end-time">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold">สถานที่</label>
+                <input type="text" class="form-control" id="event-location" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold">กลุ่มเป้าหมาย</label>
+                <input type="text" class="form-control" id="event-target">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-bold d-flex justify-content-between">
+                  รายละเอียดกิจกรรม
+                </label>
+                <textarea class="form-control auto-expand" id="event-detail" rows="4"
+                          oninput="handleTextareaInput(this)"
+                          maxlength="50000"
+                          style="min-height: 120px;"></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-bold d-flex justify-content-between">
+                  ผลที่เกิดขึ้นจากการทำกิจกรรม
+                </label>
+                <textarea class="form-control auto-expand" id="event-result" rows="4"
+                          oninput="handleTextareaInput(this)"
+                          maxlength="50000"
+                          style="min-height: 120px;"></textarea>
+              </div>
+              
+              <!-- Images Section -->
+              <div class="col-12 mt-4">
+                <label class="form-label fw-bold d-block mb-3">ภาพกิจกรรม (สูงสุด 4 รูป)</label>
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <div class="image-upload-box" id="img-preview-box-1" onclick="document.getElementById('img-input-1').click()">
+                      <i class="bi bi-camera fs-1 mb-2"></i>
+                      <span class="small">คลิกเพื่ออัปโหลดรูปที่ 1</span>
+                      <input type="file" id="img-input-1" class="d-none" accept="image/*" onchange="previewImage(event, 1)">
+                      <input type="hidden" id="event-img-1">
+                      <img id="img-preview-1" class="img-preview d-none">
+                      <button type="button" class="btn-remove-img d-none" id="btn-remove-1" onclick="removeImage(event, 1)">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="image-upload-box" id="img-preview-box-2" onclick="document.getElementById('img-input-2').click()">
+                      <i class="bi bi-camera fs-1 mb-2"></i>
+                      <span class="small">คลิกเพื่ออัปโหลดรูปที่ 2</span>
+                      <input type="file" id="img-input-2" class="d-none" accept="image/*" onchange="previewImage(event, 2)">
+                      <input type="hidden" id="event-img-2">
+                      <img id="img-preview-2" class="img-preview d-none">
+                      <button type="button" class="btn-remove-img d-none" id="btn-remove-2" onclick="removeImage(event, 2)">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="image-upload-box" id="img-preview-box-3" onclick="document.getElementById('img-input-3').click()">
+                      <i class="bi bi-camera fs-1 mb-2"></i>
+                      <span class="small">คลิกเพื่ออัปโหลดรูปที่ 3</span>
+                      <input type="file" id="img-input-3" class="d-none" accept="image/*" onchange="previewImage(event, 3)">
+                      <input type="hidden" id="event-img-3">
+                      <img id="img-preview-3" class="img-preview d-none">
+                      <button type="button" class="btn-remove-img d-none" id="btn-remove-3" onclick="removeImage(event, 3)">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="image-upload-box" id="img-preview-box-4" onclick="document.getElementById('img-input-4').click()">
+                      <i class="bi bi-camera fs-1 mb-2"></i>
+                      <span class="small">คลิกเพื่ออัปโหลดรูปที่ 4</span>
+                      <input type="file" id="img-input-4" class="d-none" accept="image/*" onchange="previewImage(event, 4)">
+                      <input type="hidden" id="event-img-4">
+                      <img id="img-preview-4" class="img-preview d-none">
+                      <button type="button" class="btn-remove-img d-none" id="btn-remove-4" onclick="removeImage(event, 4)">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Budget Section -->
+              <div class="col-12 mt-4">
+                <label class="form-label fw-bold d-block mb-3">รายละเอียดงบประมาณ</label>
+                <div class="table-responsive">
+                  <table class="table table-bordered align-middle">
+                    <thead class="bg-light">
+                      <tr>
+                        <th>รายการ</th>
+                        <th style="width: 200px;">จำนวนเงิน (บาท)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="fw-bold">
+                        <td>รายรับ (งบที่ได้รับของกิจกรรมนี้ โดยดูจากข้อเสนอโครงการ)</td>
+                        <td><input type="number" id="budget-income" class="form-control text-end" oninput="calculateFixedBudget()" placeholder="0.00"></td>
+                      </tr>
+                      <tr class="bg-light fw-bold">
+                        <td colspan="2">รายจ่าย</td>
+                      </tr>
+                      <tr>
+                        <td>1. ค่าตอบแทน อาทิ วิทยากร/อาสาสมัคร ค่าตอบแทนประสานงาน เป็นต้น</td>
+                        <td><input type="number" class="form-control text-end expense-input" oninput="calculateFixedBudget()" placeholder="0.00"></td>
+                      </tr>
+                      <tr>
+                        <td>2. ค่าจ้าง เช่น ค่าจ้างจัดทำข้อมูล ค่าจ้างทำของ</td>
+                        <td><input type="number" class="form-control text-end expense-input" oninput="calculateFixedBudget()" placeholder="0.00"></td>
+                      </tr>
+                      <tr>
+                        <td>3. ค่าใช้สอย เช่น ค่าใช้จ่ายเพื่อซื้อบริการต่างๆ อาทิ ค่าพาหนะ ค่าที่พัก ค่าถ่ายเอกสาร ค่าเช่าห้องประชุม ค่าอาหารและเครื่องดื่ม ค่าเช่าสถานที่</td>
+                        <td><input type="number" class="form-control text-end expense-input" oninput="calculateFixedBudget()" placeholder="0.00"></td>
+                      </tr>
+                      <tr>
+                        <td>4. ค่าวัสดุ ค่าใช้จ่ายเพื่อซื้อวัสดุสิ้นเปลืองในสำนักงานหรือใช้ในการทำกิจกรรม เช่น วัสดุเครื่องเขียน วัสดุสำนักงาน วัสดุโฆษณาและเผยแพร่</td>
+                        <td><input type="number" class="form-control text-end expense-input" oninput="calculateFixedBudget()" placeholder="0.00"></td>
+                      </tr>
+                      <tr>
+                        <td>5. ค่าสาธารณูปโภค ค่าไฟฟ้า ค่าน้ำประปา ค่าโทรศัพท์ ค่าไปรษณีย์</td>
+                        <td><input type="number" class="form-control text-end expense-input" oninput="calculateFixedBudget()" placeholder="0.00"></td>
+                      </tr>
+                      <tr>
+                        <td>6. ค่าอื่นๆ รายงานที่อยู่นอกเหนือจากรายการข้างต้น</td>
+                        <td><input type="number" class="form-control text-end expense-input" oninput="calculateFixedBudget()" placeholder="0.00"></td>
+                      </tr>
+                      <tr class="bg-light fw-bold">
+                        <td class="text-end">รวมรายจ่าย</td>
+                        <td class="text-end"><span id="total-expenses">0.00</span></td>
+                      </tr>
+                      <tr class="fw-bold">
+                        <td class="text-end">ยอดยกไป (คงเหลือ)</td>
+                        <td class="text-end"><span id="budget-balance">0.00</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer bg-light p-3">
+          <button type="button" class="btn btn-secondary-th px-4" data-bs-dismiss="modal">ยกเลิก</button>
+          <button type="button" class="btn btn-primary-th px-4" onclick="handleSaveEvent()">
+            <i class="bi bi-save me-2"></i> บันทึกข้อมูล
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header bg-primary-th text-white py-3">
+          <h5 class="modal-title"><i class="bi bi-info-circle me-2"></i>รายละเอียดผลการจัดกิจกรรม</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4" id="preview-content">
+          <!-- Preview content will be injected here -->
+        </div>
+        <div class="modal-footer bg-light p-3">
+          <button type="button" class="btn btn-secondary-th px-4" data-bs-dismiss="modal">ปิดหน้าต่าง</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: HOME -->
+  <main id="home" class="page-content active">
+    <section class="hero-section">
+      <div class="container">
+        <!-- <img src="https://www.thaihealth.or.th/wp-content/uploads/2023/08/Logo-thaihealth.png" width="200px" alt="Logo_1"> -->
+        <svg width="0" height="0">
+          <filter id="white">
+            <feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0" />
+          </filter>
+        </svg>
+        <img src="https://www.thaihealth.or.th/logo.png" width="200" style="filter:url(#white);">
+
+        <h1 class="mt-3 display-3 fw-bold">สร้างสุขภาวะที่ดี<br>เพื่อชาวเชียงรายอย่างยั่งยืน</h1>
+        <div class="welcome-badge fs-4 ">NODE มุ่งเป้า จังหวัดเชียงราย</div>
+        <p class="lead mb-4">ขับเคลื่อนนโยบายและนวัตกรรมเพื่อสังคมสุขภาวะ โดยการสนับสนุนจาก สสส.<br>เรามุ่งเน้นการสร้างเครือข่ายความร่วมมือที่เข้มแข็ง เพื่อคุณภาพชีวิตที่ดีกว่าของพี่น้องชาวเชียงราย
+        </p>
+        <div class="d-flex flex-column flex-md-row justify-content-center gap-3">
+          <button class="btn btn-primary-th btn-lg px-5 border border-1 border-white-subtle" onclick="showPage('projects')">สำรวจโครงการ</button>
+          <button class="btn btn-secondary-th btn-lg px-5 border border-1 border-white-subtle" onclick="showPage('dashboard')">ดูภาพรวมสถิติ</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="container">
+      <div id="home-stats" class="row g-4 mb-5 mt-n5">
+        <!-- Stats will be injected here -->
+      </div>
+
+      <!-- Welcome & Introduction -->
+      <div class="row g-5 align-items-center mb-5 py-5">
+        <div class="col-lg-6">
+          <div class="pe-lg-5 text-start">
+            <!-- <div class="mb-4">
+              <h5 class="fw-bold mb-1" style="color: var(--primary); letter-spacing: 2px; text-transform: uppercase;">NODE มุ่งเป้า</h5>
+              <p class="text-muted small mb-0">จังหวัดเชียงราย</p>
+              <div style="width: 60px; height: 4px; background: var(--secondary); margin-top: 12px; border-radius: 10px;"></div>
+            </div> -->
+
+            <!-- <div class="welcome-badge">ยินดีต้อนรับสู่ NODE มุ่งเป้า เชียงราย</div> -->
+
+            <h1 class="welcome-title">ร่วมสร้าง<span class="accent-text"> "เชียงรายเมืองสุขภาวะ"</span></h1>
+
+            <p class="welcome-desc">
+              Node มุ่งเป้า จังหวัดเชียงราย ภายใต้การสนับสนุนจาก
+              <span class="fw-bold accent-text">สสส. (สำนักงานกองทุนสนับสนุนการสร้างเสริมสุขภาพ)</span>
+              ทำหน้าที่เป็นกลไกกลางในการเชื่อมประสาน และขับเคลื่อนงานสร้างเสริมสุขภาพในพื้นที่จังหวัดเชียงราย
+              มุ่งเน้นการทำงานร่วมกับภาคีเครือข่ายทุกภาคส่วน เพื่อแก้ไขปัญหาและลดปัจจัยเสี่ยงทางสุขภาพอย่างยั่งยืน
+            </p>
+
+            <div class="row g-4">
+              <div class="col-sm-6">
+                <div class="feature-item-modern">
+                  <div class="feature-icon-box"><i class="bi bi-people-fill"></i></div>
+                  <span>สนับสนุนภาคีเครือข่าย</span>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="feature-item-modern">
+                  <div class="feature-icon-box"><i class="bi bi-lightbulb-fill"></i></div>
+                  <span>ขับเคลื่อนนวัตกรรมสุขภาพ</span>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="feature-item-modern">
+                  <div class="feature-icon-box"><i class="bi bi-journal-text"></i></div>
+                  <span>พัฒนาองค์ความรู้ท้องถิ่น</span>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="feature-item-modern">
+                  <div class="feature-icon-box"><i class="bi bi-heart-fill"></i></div>
+                  <span>สร้างสังคมสุขภาวะ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="image-decoration-wrapper">
+            <img src="https://lh3.googleusercontent.com/d/12UbuzJA256DPpTjssEu17YIGE55x8-bSD" class="img-fluid welcome-image" alt="Health Innovation">
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="media-divider"></div>
+      </div>
+
+      <!-- Mission & Strategic Pillars -->
+      <div class="section-title">
+        <h2>จุดเน้นการดำเนินงาน</h2>
+        <p class="text-muted">กลยุทธ์สำคัญในการขับเคลื่อนเชียงรายสู่เมืองสุขภาวะ</p>
+      </div>
+
+      <div class="row g-4 mb-3">
+        <div class="col-md-3">
+          <div class="feature-card">
+            <div class="feature-icon-circle"><i class="bi bi-people-fill"></i></div>
+            <h4>พัฒนาภาคี</h4>
+            <p class="text-muted">สร้างความร่วมมือและพัฒนาศักยภาพเครือข่ายคนทำงานในพื้นที่</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="feature-card">
+            <div class="feature-icon-circle"><i class="bi bi-journal-check"></i></div>
+            <h4>จัดการความรู้</h4>
+            <p class="text-muted">รวบรวมและเผยแพร่องค์ความรู้ที่เป็นประโยชน์ต่อการสร้างเสริมสุขภาพ</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="feature-card">
+            <div class="feature-icon-circle"><i class="bi bi-megaphone-fill"></i></div>
+            <h4>สื่อสารสังคม</h4>
+            <p class="text-muted">สื่อสารเพื่อสร้างความตระหนักรู้และปรับเปลี่ยนพฤติกรรมสุขภาพ</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="feature-card">
+            <div class="feature-icon-circle"><i class="bi bi-shield-check"></i></div>
+            <h4>นโยบายสาธารณะ</h4>
+            <p class="text-muted">ผลักดันให้เกิดนโยบายที่เอื้อต่อการมีสุขภาพที่ดีในระดับท้องถิ่น</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vision & Mission Boxes -->
+      <div class="row g-4 mb-5 py-4">
+        <div class="col-md-6">
+          <div class="mission-box h-100">
+            <h4 class="fw-bold mb-3">วิสัยทัศน์ (Vision)</h4>
+            <p class="mb-0 fs-5 text-muted">"เชียงรายเป็นจังหวัดที่มีสภาพแวดล้อมเอื้อต่อสุขภาวะ
+              และประชาชนมีคุณภาพชีวิตที่ดีอย่างเท่าเทียมและยั่งยืน"</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mission-box h-100" style="border-left-color: var(--primary);">
+            <h4 class="fw-bold mb-3">พันธกิจ (Mission)</h4>
+            <p class="mb-0 text-muted">มุ่งมั่นเป็นศูนย์กลางในการประสานงาน สนับสนุนทุน และพัฒนาศักยภาพภาคีเครือข่าย
+              เพื่อขับเคลื่อนงานสร้างเสริมสุขภาพตามยุทธศาสตร์ สสส. ให้สอดคล้องกับบริบทของพื้นที่เชียงราย</p>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="col-12">
+        <div class="media-divider"></div>
+      </div>
+
+
+      <div class="section-title">
+        <h2>ข่าวสารและกิจกรรมล่าสุด</h2>
+        <p class="text-muted">ติดตามความเคลื่อนไหวของการดำเนินงานในพื้นที่</p>
+      </div>
+      <div class="row g-4" id="home-news">
+        <!-- News items will be injected here -->
+      </div>
+      <div class="text-center mt-3 mb-5">
+        <button class="btn btn-outline-primary-th" onclick="showPage('news')">ดูข่าวทั้งหมด</button>
+      </div>
+
+      <div class="col-12">
+        <div class="media-divider"></div>
+      </div>
+
+      <div class="section-title mb-5">
+        <h2>ประชาสัมพันธ์</h2>
+      </div>
+      <div class="row g-4" id="home-update">
+      </div>
+
+    </div>
+  </main>
+
+  <!-- PAGE: PROJECTS -->
+  <main id="projects" class="page-content">
+    <div class="container">
+      <div class="section-title">
+        <h2>รายการโครงการทั้งหมด</h2>
+        <p class="text-muted">ค้นหาและตรวจสอบโครงการส่งเสริมสุขภาพในจังหวัดเชียงราย</p>
+      </div>
+
+      <!-- Filters -->
+      <div class="card-th p-4 mb-5">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="input-group">
+              <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search" style="color: var(--primary)"></i></span>
+              <input type="text" id="searchProject" class="form-control border-start-0" placeholder="ค้นหาชื่อโครงการ หรือ ผู้รับผิดชอบ..." onkeyup="filterProjects()">
+            </div>
+          </div>
+          <div class="col-md-3">
+            <select id="filterDistrict" class="form-select" onchange="filterProjects()">
+              <option value="">กำลังโหลดอำเภอ...</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <select id="filterType" class="form-select" onchange="filterProjects()">
+              <option value="">กำลังโหลดประเภท...</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4" id="project-list">
+        <!-- Project cards will be injected here -->
+      </div>
+    </div>
+  </main>
+
+  <!-- PAGE: DASHBOARD -->
+  <main id="dashboard" class="page-content">
+    <div class="container">
+      <div class="section-title">
+        <h2>แดชบอร์ดภาพรวมโครงการ</h2>
+        <p class="text-muted">วิเคราะห์ข้อมูลการดำเนินงานเชิงสถิติ</p>
+      </div>
+
+      <!-- Dashboard Stats Summary -->
+      <div id="dashboard-stats" class="row g-4 mb-5">
+        <div class="col-md-4">
+          <div class="dashboard-stat-mini">
+            <i class="bi bi-layers-half"></i>
+            <div class="dashboard-stat-info">
+              <h6>จำนวนโครงการทั้งหมด</h6>
+              <span id="dash-stat-projects">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="dashboard-stat-mini" style="border-left-color: var(--secondary);">
+            <i class="bi bi-wallet2" style="color: var(--secondary); background: var(--secondary-pastel);"></i>
+            <div class="dashboard-stat-info">
+              <h6>งบประมาณสนับสนุน</h6>
+              <span id="dash-stat-budget" style="color: var(--secondary);">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="dashboard-stat-mini">
+            <i class="bi bi-geo-alt-fill"></i>
+            <div class="dashboard-stat-info">
+              <h6>พื้นที่ดำเนินการ (อำเภอ)</h6>
+              <span id="dash-stat-districts">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-5">
+          <div class="chart-container">
+            <div class="chart-header">
+              <h5>สัดส่วนโครงการแยกตามประเภท</h5>
+              <i class="bi bi-pie-chart accent-text fs-4"></i>
+            </div>
+            <canvas id="chartType"></canvas>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="chart-container">
+            <div class="chart-header">
+              <h5>จำนวนโครงการแยกตามอำเภอ</h5>
+              <i class="bi bi-bar-chart accent-text fs-4"></i>
+            </div>
+            <canvas id="chartDistrict"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- PAGE: NEWS -->
+  <main id="news" class="page-content">
+    <div class="container">
+      <div class="section-title">
+        <h2>ข่าวสารและบทความ</h2>
+      </div>
+      <div class="row g-4" id="all-news">
+        <p class="text-center py-5 text-muted">กำลังปรับปรุงข้อมูลข่าวสาร...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- PAGE: KNOWLEDGE -->
+  <main id="knowledge" class="page-content">
+    <div class="container text-center">
+      <div class="section-title">
+        <h2>สื่อสร้างสุขและสื่อเผยแพร่</h2>
+      </div>
+      <!-- <i class="bi bi-journal-text display-1 mb-4" style="color: var(--primary)"></i>
+      <p class="lead mb-5">รวบรวมบทความวิชาการ และสื่อการเรียนรู้เพื่อสุขภาวะ</p> -->
+      <div class="row g-4 text-start" id="knowledge-list">
+        <!-- Knowledge items will be injected here -->
+      </div>
+    </div>
+  </main>
+
+  <!-- PAGE: ABOUT -->
+  <main id="about" class="page-content">
+    <div class="container">
+      <div class="section-title">
+        <h2>เกี่ยวกับโครงการ</h2>
+        <p class="text-muted">Node มุ่งเป้า (สสส.) จังหวัดเชียงราย</p>
+      </div>
+      <div id="about-content">
+        <!-- About content from sheet will be injected here -->
+      </div>
+    </div>
+  </main>
+
+  <!-- PAGE: CONTACT -->
+  <main id="contact" class="page-content">
+    <div class="container">
+      <div class="section-title">
+        <h2>ติดต่อเรา</h2>
+        <p class="text-muted">Node มุ่งเป้า จังหวัดเชียงราย</p>
+      </div>
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="card-th p-5 text-center">
+            <h4 class="mb-4">สำนักงาน Node มุ่งเป้า เชียงราย</h4>
+            <p><i class="bi bi-geo-alt-fill me-2" style="color: var(--primary)"></i> เลขที่ 334 หมู่ 6 ตำบลห้วยสัก
+              อำเภอเมืองเชียงราย จังหวัดเชียงราย 57000</p>
+            <p><i class="bi bi-telephone-fill me-2" style="color: var(--primary)"></i> 089-556-7302</p>
+            <p><i class="bi bi-envelope-fill me-2" style="color: var(--primary)"></i> Cr.thaihealth@gmail.com</p>
+            <div class="mt-5 d-flex justify-content-center gap-3">
+              <a href="javascript:void(0)" class="social-btn"
+                style="background: var(--primary-pastel); color: var(--primary); border: none;"><i class="bi bi-facebook"></i></a>
+              <a href="javascript:void(0)" class="social-btn"
+                style="background: var(--primary-pastel); color: var(--primary); border: none;"><i class="bi bi-line"></i></a>
+              <a href="javascript:void(0)" class="social-btn"
+                style="background: var(--primary-pastel); color: var(--primary); border: none;"><i class="bi bi-youtube"></i></a>
+              <a href="javascript:void(0)" class="social-btn"
+                style="background: var(--primary-pastel); color: var(--primary); border: none;"><i class="bi bi-globe"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-top">
+      <div class="row g-5">
+        <div class="col-lg-4 mb-4">
+          <div class="footer-brand-text mb-4">
+            <h4 class="fw-bold mb-1" style="color: var(--white); letter-spacing: 1px;">NODE มุ่งเป้า</h4>
+            <p class="mb-0 opacity-75" style="font-size: 0.9rem;">จังหวัดเชียงราย</p>
+            <div style="width: 40px; height: 3px; background: var(--secondary); margin-top: 10px;"></div>
+          </div>
+          <p class="mt-3 opacity-75">มุ่งเน้นการสร้างสุขภาวะที่ดีอย่างยั่งยืนเพื่อชาวเชียงราย ภายใต้การสนับสนุนจาก สสส.
+          </p>
+          <div class="social-container">
+            <a href="javascript:void(0)" class="social-btn"><i class="bi bi-facebook"></i></a>
+            <a href="javascript:void(0)" class="social-btn"><i class="bi bi-line"></i></a>
+            <a href="javascript:void(0)" class="social-btn"><i class="bi bi-youtube"></i></a>
+            <a href="javascript:void(0)" class="social-btn"><i class="bi bi-globe"></i></a>
+          </div>
+        </div>
+
+        <div class="col-lg-2 offset-lg-1">
+          <h5 class="footer-title">เมนูหลัก</h5>
+          <ul class="footer-links-list">
+            <li><a href="javascript:void(0)" class="footer-link"
+                onclick="showPage('home')"><i class="bi bi-chevron-right"></i> หน้าหลัก</a></li>
+            <li><a href="javascript:void(0)" class="footer-link"
+                onclick="showPage('projects')"><i class="bi bi-chevron-right"></i> โครงการ</a></li>
+            <li><a href="javascript:void(0)" class="footer-link"
+                onclick="showPage('news')"><i class="bi bi-chevron-right"></i> ข่าวสาร</a></li>
+            <li><a href="javascript:void(0)" class="footer-link"
+                onclick="showPage('knowledge')"><i class="bi bi-chevron-right"></i> สื่อสร้างสุข</a></li>
+            <li><a href="javascript:void(0)" class="footer-link"
+                onclick="showPage('dashboard')"><i class="bi bi-chevron-right"></i> แดชบอร์ด</a></li>
+            <li><a href="javascript:void(0)" class="footer-link"
+                onclick="showPage('about')"><i class="bi bi-chevron-right"></i> เกี่ยวกับเรา</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-2">
+          <h5 class="footer-title">ลิงก์ภายนอก</h5>
+          <ul class="footer-links-list">
+            <!-- <li><a href="https://moph.go.th/" target="_blank" class="footer-link"><i class="bi bi-box-arrow-up-right"></i> กระทรวงสาธารณสุข</a></li> -->
+            <li><a href="https://www.thaihealth.or.th/" target="_blank"
+                class="footer-link"><i class="bi bi-box-arrow-up-right"></i> สสส. (ThaiHealth)</a></li>
+            <li><a href="https://cro.moph.go.th/" target="_blank"
+                class="footer-link"><i class="bi bi-box-arrow-up-right"></i> สสจ.เชียงราย</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-3">
+          <h5 class="footer-title">ติดต่อเรา</h5>
+          <div class="footer-contact-item">
+            <i class="bi bi-geo-alt"></i>
+            <span>เลขที่ 334 หมู่ 6 ตำบลห้วยสัก อำเภอเมืองเชียงราย จังหวัดเชียงราย 57000</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="bi bi-telephone"></i>
+            <span>089-556-7302</span>
+          </div>
+          <div class="footer-contact-item">
+            <i class="bi bi-envelope"></i>
+            <span>Cr.thaihealth@gmail.com</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-md-6 text-center text-md-start">
+            <p class="copyright-text">© 2026 Node มุ่งเป้า จังหวัดเชียงราย. All Rights Reserved.</p>
+          </div>
+          <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
+  <!-- Hidden PDF Template Container -->
+  <div id="pdf-template-container" style="position: absolute; left: -9999px; top: -9999px;"></div>
+  
+  <!-- Custom Scripts -->
+  <script src="script.js"></script>
+</body>
+
+</html>
