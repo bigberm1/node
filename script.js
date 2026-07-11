@@ -2163,6 +2163,16 @@
   }
 
   /**
+   * Helper to improve Thai word wrapping in pdfMake
+   */
+  function prepareThaiText(text) {
+    if (!text) return '-';
+    // Insert Zero-Width Space (\u200B) between Thai characters to help pdfMake wrap words
+    // This is a simple regex that finds boundaries between Thai characters
+    return text.replace(/([ก-๙])(?=[ก-๙])/g, '$1\u200B');
+  }
+
+  /**
    * Generate PDF for an Event using pdfMake
    */
   async function generateEventPDF(id) {
@@ -2296,8 +2306,9 @@
             color: '#555'
           },
           contentBox: {
-            margin: [0, 5, 0, 15],
-            lineHeight: 1.4
+            margin: [0, 2, 0, 10],
+            lineHeight: 1.05,
+            alignment: 'justify'
           },
           tableHeader: {
             bold: true,
@@ -2331,11 +2342,11 @@
 
           // Section 2: รายละเอียดกิจกรรม
           { text: '2. รายละเอียดกิจกรรม', style: 'sectionTitle' },
-          { text: e['รายละเอียดกิจกรรม'] || '-', style: 'contentBox' },
+          { text: prepareThaiText(getVal('รายละเอียดกิจกรรม')), style: 'contentBox' },
 
           // Section 3: ผลที่เกิดขึ้น
           { text: '3. ผลที่เกิดขึ้น', style: 'sectionTitle' },
-          { text: e['ผลที่เกิดขึ้นจากการทำกิจกรรม'] || '-', style: 'contentBox' },
+          { text: prepareThaiText(getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม')), style: 'contentBox' },
 
           // Section 4: สรุปงบประมาณ
           { text: '4. สรุปงบประมาณ', style: 'sectionTitle' },
