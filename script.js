@@ -136,8 +136,8 @@
             <div class="fw-bold"><i class="bi bi-calendar3 me-2 text-primary"></i>${e['วันที่จัดกิจกรรม'] || '-'} | ${e['เวลาเริ่ม'] || '-'} - ${e['เวลาสิ้นสุด'] || '-'} น.</div>
             <div class="small text-muted"><i class="bi bi-cash-stack me-2"></i>งบประมาณ: ${budgetAmount}</div>
           </td>
-          <td><i class="bi bi-pin-map me-2 text-danger"></i>${e['สถานที่'] || '-'}</td>
-          <td><i class="bi bi-people me-2 text-info"></i>${e['กลุ่มเป้าหมาย'] || '-'}</td>
+          // <td><i class="bi bi-pin-map me-2 text-danger"></i>${e['สถานที่'] || '-'}</td>
+          // <td><i class="bi bi-people me-2 text-info"></i>${e['กลุ่มเป้าหมาย'] || '-'}</td>
           <td class="text-end pe-4">
             <div class="d-flex justify-content-end gap-3">
               <button class="btn btn-sm btn-light border py-1" onclick="generateEventPDF('${eventId}')" title="สร้าง PDF">
