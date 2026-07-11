@@ -133,11 +133,11 @@
             <div class="small text-muted"><i class="bi bi-geo-alt me-1"></i>${e.village || '-'}</div>
           </td>
           <td>
-            <div class="fw-bold"><i class="bi bi-calendar3 me-2 text-primary"></i>${e['วันที่จัดกิจกรรม'] || '-'}</div>
+            <div class="fw-bold"><i class="bi bi-calendar3 me-2 text-success"></i>${e['วันที่จัดกิจกรรม'] || '-'}</div>
             <div class="small text-muted">งบประมาณ: ${budgetAmount}</div>
           </td>
           <td class="text-end pe-4">
-            <div class="d-flex justify-content-end gap-1">
+            <div class="d-flex justify-content-center gap-2">
               <button class="btn btn-sm btn-light border py-1" onclick="generateEventPDF('${eventId}')" title="สร้าง PDF">
                 <i class="bi bi-file-earmark-pdf text-danger"></i>
               </button>
@@ -152,11 +152,11 @@
                   <i class="bi bi-trash3 text-danger"></i>
                 </button>
                 <button class="btn btn-sm btn-primary-th px-3 py-1 nowrap" onclick="handleApproveEvent('${eventId}', event)">
-                  <i class="bi bi-check-circle me-1"></i> ยืนยัน
+                  ยืนยัน
                 </button>
               ` : `
                 <span class="badge rounded-pill bg-success-subtle text-success border border-success px-3 py-2">
-                  <i class="bi bi-shield-check me-1"></i> ยืนยันข้อมูลแล้ว
+                  ยืนยันข้อมูลแล้ว
                 </span>
               `}
             </div>
