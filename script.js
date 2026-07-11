@@ -2362,11 +2362,19 @@
 
           // Section 2: รายละเอียดกิจกรรม
           { text: '2. รายละเอียดกิจกรรม', style: 'sectionTitle' },
-          { text: prepareThaiText(getVal('รายละเอียดกิจกรรม')), style: 'contentBox' },
+          {
+              text: prepareThaiText(getVal('รายละเอียดกิจกรรม')),
+              style: 'contentBox',
+              preserveLeadingSpaces: true
+          },
 
           // Section 3: ผลที่เกิดขึ้น
           { text: '3. ผลที่เกิดขึ้น', style: 'sectionTitle' },
-          { text: prepareThaiText(getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม')), style: 'contentBox' },
+          {
+              text: prepareThaiText(getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม')),
+              style: 'contentBox',
+              preserveLeadingSpaces: true
+          },
 
           // Section 4: สรุปงบประมาณ
           { text: '4. สรุปงบประมาณ', style: 'sectionTitle' },
