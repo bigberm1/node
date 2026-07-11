@@ -2165,11 +2165,11 @@
   /**
    * Helper to improve Thai word wrapping in pdfMake
    */
-
-    function prepareThaiText(text) {
+  function prepareThaiText(text) {
     if (!text) return '-';
     return text.replace(/([ก-๙])(?=[ก-๙])/g, '$1\u200B');
   }
+
 
   /**
    * Generate PDF for an Event using pdfMake
