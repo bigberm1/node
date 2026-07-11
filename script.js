@@ -129,15 +129,17 @@
       return `
         <tr>
           <td class="ps-4">
-            <div class="fw-bold text-success">${e['ชื่อกิจกรรม'] || '-'}</div>
+            <div class="fw-bold text-primary">${e['ชื่อกิจกรรม'] || '-'}</div>
             <div class="small text-muted"><i class="bi bi-geo-alt me-1"></i>${e.village || '-'}</div>
           </td>
           <td>
-            <div class="fw-bold"><i class="bi bi-calendar3 me-2 text-success"></i>${e['วันที่จัดกิจกรรม'] || '-'}</div>
-            <div class="small text-muted">งบประมาณ: ${budgetAmount}</div>
+            <div class="fw-bold"><i class="bi bi-calendar3 me-2 text-primary"></i>${e['วันที่จัดกิจกรรม'] || '-'} | ${e['เวลาเริ่ม'] || '-'} - ${e['เวลาสิ้นสุด'] || '-'} น.</div>
+            <div class="small text-muted"><i class="bi bi-cash-stack me-2"></i>งบประมาณ: ${budgetAmount}</div>
           </td>
+          <td><i class="bi bi-pin-map me-2 text-danger"></i>${e['สถานที่'] || '-'}</td>
+          <td><i class="bi bi-people me-2 text-info"></i>${e['กลุ่มเป้าหมาย'] || '-'}</td>
           <td class="text-end pe-4">
-            <div class="d-flex justify-content-center gap-2">
+            <div class="d-flex justify-content-center flex-wrap gap-2">
               <button class="btn btn-sm btn-light border py-1" onclick="generateEventPDF('${eventId}')" title="สร้าง PDF">
                 <i class="bi bi-file-earmark-pdf text-danger"></i>
               </button>
@@ -151,12 +153,12 @@
                 <button class="btn btn-sm btn-light border py-1" onclick="handleDeleteEvent('${eventId}')" title="ลบ">
                   <i class="bi bi-trash3 text-danger"></i>
                 </button>
-                <button class="btn btn-sm btn-primary-th px-3 py-1 nowrap" onclick="handleApproveEvent('${eventId}', event)">
-                  ยืนยัน
+                <button class="btn btn-sm btn-primary-th px-3 py-1" onclick="handleApproveEvent('${eventId}', event)">
+                  <i class="bi bi-check-circle me-1"></i> ยืนยัน
                 </button>
               ` : `
                 <span class="badge rounded-pill bg-success-subtle text-success border border-success px-3 py-2">
-                  ยืนยันข้อมูลแล้ว
+                  <i class="bi bi-shield-check me-1"></i> ยืนยันข้อมูลแล้ว
                 </span>
               `}
             </div>
@@ -758,11 +760,14 @@
           * {
             font-family: 'Sarabun', 'Kanit', sans-serif;
             box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
           }
           body {
             padding: 20px;
             font-size: 14px;
             line-height: 1.6;
+            background-color: white;
           }
           .header {
             text-align: center;
@@ -884,12 +889,12 @@
 
         <div class="section">
           <div class="section-title">รายละเอียดกิจกรรม</div>
-          <div style="white-space: pre-wrap; line-height: 1.8; background: none; padding: 0;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
+          <div style="white-space: pre-wrap; line-height: 1.8; background: transparent !important; border: none !important; padding: 0; margin: 0; letter-spacing: 0.1px;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
         </div>
 
         <div class="section">
           <div class="section-title">ผลที่เกิดขึ้นจากการทำกิจกรรม</div>
-          <div style="white-space: pre-wrap; line-height: 1.8; background: none; padding: 0;">${getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '-'}</div>
+          <div style="white-space: pre-wrap; line-height: 1.8; background: transparent !important; border: none !important; padding: 0; margin: 0; letter-spacing: 0.1px;">${getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '-'}</div>
         </div>
 
         ${([1,2,3,4].some(i => getVal(`ภาพกิจกรรม${i}`))) ? `
@@ -974,7 +979,8 @@
       html2canvas: { 
         scale: 2,
         useCORS: true,
-        letterRendering: true
+        letterRendering: false,
+        logging: false
       },
       jsPDF: { 
         unit: 'mm', 
