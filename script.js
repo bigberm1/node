@@ -134,7 +134,7 @@
           </td>
           <td>
             <div class="fw-bold"><i class="bi bi-calendar3 me-2 text-primary"></i>${e['วันที่จัดกิจกรรม'] || '-'} | ${e['เวลาเริ่ม'] || '-'} - ${e['เวลาสิ้นสุด'] || '-'} น.</div>
-            <div class="small text-muted"><i class="bi bi-cash-stack me-2"></i>งบประมาณ: ${budgetAmount}</div>
+            <div class="small text-muted">งบประมาณ: ${budgetAmount}</div>
           </td>
           <td class="text-end pe-4">
             <div class="d-flex justify-content-end gap-3">
