@@ -2325,10 +2325,9 @@
             color: '#555'
           },
           contentBox: {
-            fontSize: 16,
-            margin: [0, 5, 0, 15],
-            lineHeight: 1.3,
-            alignment: 'left'
+            margin: [0, 2, 0, 10],
+            lineHeight: 1.05,
+            alignment: 'justify'
           },
           tableHeader: {
             bold: true,
@@ -2362,19 +2361,11 @@
 
           // Section 2: รายละเอียดกิจกรรม
           { text: '2. รายละเอียดกิจกรรม', style: 'sectionTitle' },
-          {
-              text: prepareThaiText(getVal('รายละเอียดกิจกรรม')),
-              style: 'contentBox',
-              preserveLeadingSpaces: true
-          },
+          { text: prepareThaiText(getVal('รายละเอียดกิจกรรม')), style: 'contentBox' },
 
           // Section 3: ผลที่เกิดขึ้น
           { text: '3. ผลที่เกิดขึ้น', style: 'sectionTitle' },
-          {
-              text: prepareThaiText(getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม')),
-              style: 'contentBox',
-              preserveLeadingSpaces: true
-          },
+          { text: prepareThaiText(getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม')), style: 'contentBox' },
 
           // Section 4: สรุปงบประมาณ
           { text: '4. สรุปงบประมาณ', style: 'sectionTitle' },
