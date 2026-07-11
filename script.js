@@ -226,7 +226,7 @@
       <div class="preview-report">
         <div class="text-center mb-5 pb-3 border-bottom border-2" style="border-color: var(--primary) !important">
           <h4 class="fw-bold text-success mb-1">รายงานสรุปผลการจัดกิจกรรม</h4>
-          <div class="text-muted small">หน่วยจัดการจังหวัดเชียงราย (Node มุ่งเป้า สสส.)111</div>
+          <div class="text-muted small">หน่วยจัดการจังหวัดเชียงราย (Node มุ่งเป้า สสส.)</div>
         </div>
 
         <div class="row g-4 mb-5">
@@ -251,12 +251,12 @@
 
         <div class="mb-5">
           <h6 class="fw-bold text-success border-start border-4 border-secondary ps-2 mb-2">รายละเอียดกิจกรรม</h6>
-          <div class="bg-light p-3 rounded" style="white-space: pre-wrap;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
+          <div style="white-space: pre-wrap; line-height: 1.6;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
         </div>
 
         <div class="mb-5">
           <h6 class="fw-bold text-success border-start border-4 border-secondary ps-2 mb-2">ผลที่เกิดขึ้นจากการทำกิจกรรม</h6>
-          <div class="bg-light p-3 rounded" style="white-space: pre-wrap;">${getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '-'}</div>
+          <div style="white-space: pre-wrap; line-height: 1.6;">${getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '-'}</div>
         </div>
 
         <div class="mb-5">
@@ -784,6 +784,8 @@
           }
           .section {
             margin-bottom: 20px;
+          }
+          .section.no-break {
             page-break-inside: avoid;
           }
           .section-title {
@@ -851,10 +853,10 @@
       <body>
         <div class="header">
           <h1>รายงานสรุปผลการจัดกิจกรรม</h1>
-          <p>หน่วยจัดการจังหวัดเชียงราย (Node มุ่งเป้า สสส.)222</p>
+          <p>หน่วยจัดการจังหวัดเชียงราย (Node มุ่งเป้า สสส.)</p>
         </div>
 
-        <div class="section">
+        <div class="section no-break">
           <div class="section-title">ข้อมูลทั่วไป</div>
           <div class="info-row">
             <div class="info-label">ชื่อกิจกรรม:</div>
@@ -893,7 +895,7 @@
         </div>
 
         ${([1,2,3,4].some(i => getVal(`ภาพกิจกรรม${i}`))) ? `
-        <div class="section">
+        <div class="section no-break">
           <div class="section-title">ภาพประกอบกิจกรรม</div>
           <div class="images-container">
             ${[1,2,3,4].map(i => {
@@ -908,7 +910,7 @@
         </div>
         ` : ''}
 
-        <div class="section">
+        <div class="section no-break">
           <div class="section-title">สรุปงบประมาณ</div>
           <table>
             <thead>
@@ -2175,7 +2177,7 @@
         </style>
         <div style="text-align: center; border-bottom: 4px solid #039780; padding-bottom: 20px; margin-bottom: 30px;">
           <div class="pdf-header" style="color: #039780; margin-bottom: 5px; font-size: 28px;">รายงานสรุปผลการจัดกิจกรรม</div>
-          <div style="color: #666; font-size: 16px;">หน่วยจัดการจังหวัดเชียงราย (Node มุ่งเป้า สสส.)333</div>
+          <div style="color: #666; font-size: 16px;">หน่วยจัดการจังหวัดเชียงราย (Node มุ่งเป้า สสส.)</div>
         </div>
 
         <div style="margin-bottom: 25px;">
