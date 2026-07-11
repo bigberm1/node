@@ -753,60 +753,66 @@
       <html>
       <head>
         <meta charset="UTF-8">
-        <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@100;200;300;400;500;600&family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
         <style>
           * {
+            margin: 0;
+            padding: 0;
             font-family: 'Sarabun', 'Kanit', sans-serif;
             box-sizing: border-box;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            background: white !important;
+            color: black !important;
           }
-          body {
-            padding: 20mm;
-            font-size: 21.33px; /* เทียบเท่าขนาด 16pt ใน MS Word */
+          html, body {
+            width: 210mm;
+            height: auto;
+            padding: 15mm;
+            margin: 0;
+            font-size: 21.33px; /* 16pt */
             line-height: 1.6;
-            background-color: white;
-            color: #333;
-            letter-spacing: 0.05px;
           }
           .header {
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
             border-bottom: 2px solid #039780;
           }
           .header h1 {
-            color: #039780;
-            margin: 0 0 10px 0;
-            font-size: 32px;
+            color: #039780 !important;
+            margin: 0 0 8px 0;
+            font-size: 28px;
+            font-weight: 700;
           }
           .header p {
-            color: #666;
+            color: #666 !important;
             margin: 0;
-            font-size: 21.33px;
+            font-size: 18px;
           }
           .section {
-            margin-bottom: 30px;
+            margin-bottom: 25px;
+            clear: both;
           }
           .section.no-break {
             page-break-inside: avoid;
           }
           .section-title {
             font-weight: bold;
-            color: #039780;
+            color: #039780 !important;
             border-left: 5px solid #ED7E23;
-            padding-left: 15px;
-            margin-bottom: 20px;
-            font-size: 24px;
+            padding-left: 12px;
+            margin-bottom: 15px;
+            font-size: 22px;
           }
           .info-row {
             display: flex;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
           }
           .info-label {
             width: 220px;
             font-weight: bold;
-            color: #666;
+            color: #666 !important;
           }
           .info-value {
             flex: 1;
@@ -814,24 +820,24 @@
           table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            margin-top: 12px;
             page-break-inside: avoid;
-            font-size: 18px; /* ตารางเล็กลงนิดหน่อยเพื่อให้พอดีหน้า */
+            font-size: 18px;
           }
           th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
+            border: 1px solid #ddd !important;
+            padding: 8px 10px;
             text-align: left;
           }
           th {
-            background: #f8f9fa;
+            background: #f8f9fa !important;
             font-weight: bold;
           }
           .text-end {
             text-align: right;
           }
           .bg-light {
-            background: #f8f9fa;
+            background: #f8f9fa !important;
           }
           .fw-bold {
             font-weight: bold;
@@ -849,8 +855,8 @@
           .image-item img {
             width: 100%;
             height: auto;
-            border-radius: 8px;
-            border: 1px solid #ddd;
+            border-radius: 4px;
+            border: 1px solid #ddd !important;
           }
         </style>
       </head>
@@ -890,12 +896,12 @@
 
         <div class="section">
           <div class="section-title">รายละเอียดกิจกรรม</div>
-          <div style="white-space: pre-wrap; line-height: 1.6; background: transparent !important; border: none !important; padding: 0; margin: 0; text-align: left; word-break: normal;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
+          <div style="white-space: pre-wrap; line-height: 1.7; word-break: break-word;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
         </div>
 
         <div class="section">
           <div class="section-title">ผลที่เกิดขึ้นจากการทำกิจกรรม</div>
-          <div style="white-space: pre-wrap; line-height: 1.6; background: transparent !important; border: none !important; padding: 0; margin: 0; text-align: left; word-break: normal;">${getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '-'}</div>
+          <div style="white-space: pre-wrap; line-height: 1.7; word-break: break-word;">${getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '-'}</div>
         </div>
 
         ${([1,2,3,4].some(i => getVal(`ภาพกิจกรรม${i}`))) ? `
@@ -932,34 +938,34 @@
                 <td colspan="2">รายจ่าย</td>
               </tr>
               <tr>
-                <td class="ps-4">1. ค่าตอบแทน (วิทยากร/อาสาสมัคร/ประสานงาน)</td>
+                <td style="padding-left: 30px;">1. ค่าตอบแทน (วิทยากร/อาสาสมัคร/ประสานงาน)</td>
                 <td class="text-end">${(budget.expenses?.[0] || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
               </tr>
               <tr>
-                <td class="ps-4">2. ค่าจ้าง (จัดทำข้อมูล/ทำของ)</td>
+                <td style="padding-left: 30px;">2. ค่าจ้าง (จัดทำข้อมูล/ทำของ)</td>
                 <td class="text-end">${(budget.expenses?.[1] || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
               </tr>
               <tr>
-                <td class="ps-4">3. ค่าใช้สอย (พาหนะ/ที่พัก/อาหาร/เช่าสถานที่)</td>
+                <td style="padding-left: 30px;">3. ค่าใช้สอย (พาหนะ/ที่พัก/อาหาร/เช่าสถานที่)</td>
                 <td class="text-end">${(budget.expenses?.[2] || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
               </tr>
               <tr>
-                <td class="ps-4">4. ค่าวัสดุ (เครื่องเขียน/สำนักงาน/เผยแพร่)</td>
+                <td style="padding-left: 30px;">4. ค่าวัสดุ (เครื่องเขียน/สำนักงาน/เผยแพร่)</td>
                 <td class="text-end">${(budget.expenses?.[3] || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
               </tr>
               <tr>
-                <td class="ps-4">5. ค่าสาธารณูปโภค (ไฟฟ้า/น้ำ/โทรศัพท์/ไปรษณีย์)</td>
+                <td style="padding-left: 30px;">5. ค่าสาธารณูปโภค (ไฟฟ้า/น้ำ/โทรศัพท์/ไปรษณีย์)</td>
                 <td class="text-end">${(budget.expenses?.[4] || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
               </tr>
               <tr>
-                <td class="ps-4">6. ค่าอื่นๆ</td>
+                <td style="padding-left: 30px;">6. ค่าอื่นๆ</td>
                 <td class="text-end">${(budget.expenses?.[5] || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
               </tr>
               <tr class="bg-light fw-bold">
                 <td class="text-end">รวมรายจ่ายทั้งสิ้น</td>
                 <td class="text-end text-danger">${totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
               </tr>
-              <tr class="table-warning fw-bold">
+              <tr class="fw-bold" style="border-top: 2px solid #039780;">
                 <td class="text-end">งบประมาณคงเหลือ (ยอดยกไป)</td>
                 <td class="text-end">${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
               </tr>
@@ -970,18 +976,31 @@
       </html>
     `;
 
-    const element = document.getElementById('pdf-template-container');
-    element.innerHTML = pdfContent;
+    // Create a temporary iframe to isolate the content completely
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.left = '-9999px';
+    iframe.style.top = '0';
+    iframe.style.width = '210mm';
+    iframe.style.height = '297mm';
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(pdfContent);
+    iframeDoc.close();
+
+    const element = iframeDoc.body;
 
     const opt = {
-      margin: 10,
+      margin: 0,
       filename: `รายงานกิจกรรม_${e['ชื่อกิจกรรม'] || 'กิจกรรม'}_${new Date().toISOString().split('T')[0]}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { 
         scale: 3,
         useCORS: true,
         letterRendering: true,
-        logging: false,
+        backgroundColor: '#FFFFFF',
         scrollX: 0,
         scrollY: 0
       },
@@ -993,14 +1012,24 @@
       pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
-    // Ensure fonts are loaded before generating PDF
-    if (document.fonts) {
-      document.fonts.ready.then(() => {
-        html2pdf().set(opt).from(element).save();
-      });
-    } else {
-      html2pdf().set(opt).from(element).save();
-    }
+    // Wait for iframe content and fonts to load
+    iframe.onload = () => {
+      if (iframeDoc.fonts) {
+        iframeDoc.fonts.ready.then(() => {
+          setTimeout(() => {
+            html2pdf().set(opt).from(element).save().then(() => {
+              document.body.removeChild(iframe);
+            });
+          }, 800);
+        });
+      } else {
+        setTimeout(() => {
+          html2pdf().set(opt).from(element).save().then(() => {
+            document.body.removeChild(iframe);
+          });
+        }, 1000);
+      }
+    };
   }
 
   function b64toBlob(b64Data, contentType = '', sliceSize = 512) {
