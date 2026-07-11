@@ -885,7 +885,7 @@
         </div>
 
         <div class="section">
-          <div class="section-title">รายละเอียดกิจกรรม1</div>
+          <div class="section-title">รายละเอียดกิจกรรม</div>
           <div style="white-space: pre-wrap; line-height: 1.8; background: none; padding: 0;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
         </div>
 
