@@ -136,8 +136,8 @@
             <div class="fw-bold"><i class="bi bi-calendar3 me-2 text-primary"></i>${e['วันที่จัดกิจกรรม'] || '-'} | ${e['เวลาเริ่ม'] || '-'} - ${e['เวลาสิ้นสุด'] || '-'} น.</div>
             <div class="small text-muted"><i class="bi bi-cash-stack me-2"></i>งบประมาณ: ${budgetAmount}</div>
           </td>
-          // <td><i class="bi bi-pin-map me-2 text-danger"></i>${e['สถานที่'] || '-'}</td>
-          // <td><i class="bi bi-people me-2 text-info"></i>${e['กลุ่มเป้าหมาย'] || '-'}</td>
+          <td><i class="bi bi-pin-map me-2 text-danger"></i>${e['สถานที่'] || '-'}</td>
+          <td><i class="bi bi-people me-2 text-info"></i>${e['กลุ่มเป้าหมาย'] || '-'}</td>
           <td class="text-end pe-4">
             <div class="d-flex justify-content-end gap-3">
               <button class="btn btn-sm btn-light border py-1" onclick="generateEventPDF('${eventId}')" title="สร้าง PDF">
@@ -1030,7 +1030,11 @@
       }
     }
 
-    // 2. Fetch Fresh Data from Server in background
+    // 3. Initial Route handling
+    const initialPage = window.location.hash.replace('#', '') || 'home';
+    showPage(initialPage);
+
+    // 4. Fetch Fresh Data from Server in background
     try {
       const formData = new URLSearchParams();
       formData.append('action', 'getAppData');
@@ -1075,13 +1079,31 @@
   }
 
   /**
-   * Navigation Logic
+   * Navigation Logic with Hash Routing
    */
   function showPage(pageId) {
     // Auth check for protected pages
     if (pageId === 'event-record' && !window.currentUser) {
       pageId = 'login';
     }
+
+    // Update Hash in URL without reloading
+    if (window.location.hash !== '#' + pageId) {
+      window.location.hash = pageId;
+    }
+
+    // Update Page Title
+    const pageNames = {
+      'home': 'หน้าหลัก',
+      'projects': 'โครงการทั้งหมด',
+      'news': 'ข่าวสารและกิจกรรม',
+      'knowledge': 'สื่อสร้างสุข',
+      'dashboard': 'แดชบอร์ดสถิติ',
+      'about': 'เกี่ยวกับเรา',
+      'event-record': 'บันทึกกิจกรรม',
+      'login': 'เข้าสู่ระบบ'
+    };
+    document.title = (pageNames[pageId] || 'Node มุ่งเป้า') + ' | Node มุ่งเป้า (สสส.) จังหวัดเชียงราย';
 
     // Update active nav link
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -1106,7 +1128,7 @@
     // Auto-collapse navbar on mobile
     const navbarCollapse = document.getElementById('navbarNav');
     if (navbarCollapse && navbarCollapse.classList.contains('show')) {
-      const bsCollapse = new bootstrap.Collapse(navbarCollapse);
+      const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse) || new bootstrap.Collapse(navbarCollapse);
       bsCollapse.hide();
     }
 
@@ -1120,6 +1142,17 @@
       renderEvents();
     }
   }
+
+  /**
+   * Handle Hash Change for Routing
+   */
+  window.addEventListener('hashchange', () => {
+    const pageId = window.location.hash.replace('#', '') || 'home';
+    const activePage = document.querySelector('.page-content.active');
+    if (!activePage || activePage.id !== pageId) {
+      showPage(pageId);
+    }
+  });
 
   /**
    * Populate Dropdown Filters Dynamically from Project Data
