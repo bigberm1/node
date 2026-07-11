@@ -211,9 +211,12 @@
     const e = appData.events.find(item => (item.ID || item.id) === id);
     if (!e) return;
 
+    // Helper to get value by key or lowercase key
+    const getVal = (key) => e[key] || e[key.toLowerCase()] || '';
+
     let budget = { income: 0, expenses: [0, 0, 0, 0, 0, 0] };
     try {
-      budget = JSON.parse(e['งบประมาณ'] || '{}');
+      budget = JSON.parse(getVal('งบประมาณ') || '{}');
     } catch (err) { }
 
     const totalExpense = (budget.expenses || []).reduce((a, b) => a + b, 0);
@@ -228,44 +231,47 @@
 
         <div class="row g-4 mb-5">
           <div class="col-sm-4 fw-bold text-muted">ชื่อกิจกรรม:</div>
-          <div class="col-sm-8">${e['ชื่อกิจกรรม'] || '-'}</div>
+          <div class="col-sm-8">${getVal('ชื่อกิจกรรม') || '-'}</div>
           
           <div class="col-sm-4 fw-bold text-muted">วันที่จัดกิจกรรม:</div>
-          <div class="col-sm-8">${toThaiDate(e['วันที่จัดกิจกรรม'])}</div>
+          <div class="col-sm-8">${toThaiDate(getVal('วันที่จัดกิจกรรม'))}</div>
           
           <div class="col-sm-4 fw-bold text-muted">เวลา:</div>
-          <div class="col-sm-8">${e['เวลาเริ่ม'] || '-'} น. ถึง ${e['เวลาสิ้นสุด'] || '-'} น.</div>
+          <div class="col-sm-8">${getVal('เวลาเริ่ม') || '-'} น. ถึง ${getVal('เวลาสิ้นสุด') || '-'} น.</div>
           
           <div class="col-sm-4 fw-bold text-muted">สถานที่:</div>
-          <div class="col-sm-8">${e['สถานที่'] || '-'}</div>
+          <div class="col-sm-8">${getVal('สถานที่') || '-'}</div>
           
           <div class="col-sm-4 fw-bold text-muted">ชุมชน/หมู่บ้าน:</div>
           <div class="col-sm-8">${e.village || '-'}</div>
 
           <div class="col-sm-4 fw-bold text-muted">กลุ่มเป้าหมาย:</div>
-          <div class="col-sm-8">${e['กลุ่มเป้าหมาย'] || '-'}</div>
+          <div class="col-sm-8">${getVal('กลุ่มเป้าหมาย') || '-'}</div>
         </div>
 
         <div class="mb-5">
           <h6 class="fw-bold text-success border-start border-4 border-secondary ps-2 mb-2">รายละเอียดกิจกรรม</h6>
-          <div class="bg-light p-3 rounded" style="white-space: pre-wrap;">${e['รายละเอียดกิจกรรม'] || '-'}</div>
+          <div class="bg-light p-3 rounded" style="white-space: pre-wrap;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
         </div>
 
         <div class="mb-5">
           <h6 class="fw-bold text-success border-start border-4 border-secondary ps-2 mb-2">ผลที่เกิดขึ้นจากการทำกิจกรรม</h6>
-          <div class="bg-light p-3 rounded" style="white-space: pre-wrap;">${e['ผลที่เกิดขึ้นจากการทำกิจกรรม'] || '-'}</div>
+          <div class="bg-light p-3 rounded" style="white-space: pre-wrap;">${getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '-'}</div>
         </div>
 
         <div class="mb-5">
           <h6 class="fw-bold text-success border-start border-4 border-secondary ps-2 mb-3">ภาพประกอบกิจกรรม</h6>
           <div class="row g-2">
-            ${[1, 2, 3, 4].map(i => e[`ภาพกิจกรรม${i}`] ? `
-              <div class="col-md-3 col-6">
-                <div class="position-relative">
-                  <img src="${e[`ภาพกิจกรรม${i}`]}" class="img-fluid rounded border shadow-sm w-100" style="height: 120px; object-fit: cover; cursor: pointer;" onclick="window.open(this.src, '_blank')">
+            ${[1, 2, 3, 4].map(i => {
+              const img = getVal(`ภาพกิจกรรม${i}`);
+              return img ? `
+                <div class="col-md-3 col-6">
+                  <div class="position-relative">
+                    <img src="${img}" class="img-fluid rounded border shadow-sm w-100" style="height: 120px; object-fit: cover; cursor: pointer;" onclick="window.open(this.src, '_blank')">
+                  </div>
                 </div>
-              </div>
-            ` : '').join('')}
+              ` : '';
+            }).join('')}
           </div>
         </div>
 
@@ -355,16 +361,17 @@
 
     if (id) {
       const e = appData.events.find(item => (item.ID || item.id) === id);
+      console.log('Edit event data:', e); // Debug log
       if (e) {
         document.getElementById('eventModalTitle').innerText = 'แก้ไขข้อมูลกิจกรรม';
-        document.getElementById('event-name').value = e['ชื่อกิจกรรม'] || '';
-        document.getElementById('event-date').value = e['วันที่จัดกิจกรรม'] || '';
-        document.getElementById('event-start-time').value = formatTimeForInput(e['เวลาเริ่ม']);
-        document.getElementById('event-end-time').value = formatTimeForInput(e['เวลาสิ้นสุด']);
-        document.getElementById('event-location').value = e['สถานที่'] || '';
-        document.getElementById('event-target').value = e['กลุ่มเป้าหมาย'] || '';
-        document.getElementById('event-detail').value = e['รายละเอียดกิจกรรม'] || '';
-        document.getElementById('event-result').value = e['ผลที่เกิดขึ้นจากการทำกิจกรรม'] || '';
+        document.getElementById('event-name').value = e['ชื่อกิจกรรม'] || e['ชื่อกิจกรรม'.toLowerCase()] || '';
+        document.getElementById('event-date').value = e['วันที่จัดกิจกรรม'] || e['วันที่จัดกิจกรรม'.toLowerCase()] || '';
+        document.getElementById('event-start-time').value = formatTimeForInput(e['เวลาเริ่ม'] || e['เวลาเริ่ม'.toLowerCase()]);
+        document.getElementById('event-end-time').value = formatTimeForInput(e['เวลาสิ้นสุด'] || e['เวลาสิ้นสุด'.toLowerCase()]);
+        document.getElementById('event-location').value = e['สถานที่'] || e['สถานที่'.toLowerCase()] || '';
+        document.getElementById('event-target').value = e['กลุ่มเป้าหมาย'] || e['กลุ่มเป้าหมาย'.toLowerCase()] || '';
+        document.getElementById('event-detail').value = e['รายละเอียดกิจกรรม'] || e['รายละเอียดกิจกรรม'.toLowerCase()] || '';
+        document.getElementById('event-result').value = e['ผลที่เกิดขึ้นจากการทำกิจกรรม'] || e['ผลที่เกิดขึ้นจากการทำกิจกรรม'.toLowerCase()] || '';
         
         // Trigger resize
         setTimeout(() => {
@@ -374,7 +381,7 @@
         
         // Load images
         for (let i = 1; i <= 4; i++) {
-          const img = e[`ภาพกิจกรรม${i}`];
+          const img = e[`ภาพกิจกรรม${i}`] || e[`ภาพกิจกรรม${i}`.toLowerCase()];
           if (img) {
             setPreview(i, img);
           }
@@ -382,7 +389,7 @@
 
         // Load budget
         try {
-          const budget = JSON.parse(e['งบประมาณ'] || '{}');
+          const budget = JSON.parse(e['งบประมาณ'] || e['งบประมาณ'.toLowerCase()] || '{}');
           document.getElementById('budget-income').value = budget.income || '';
           const expenseInputs = document.querySelectorAll('.expense-input');
           (budget.expenses || []).forEach((val, idx) => {
@@ -555,6 +562,13 @@
       return;
     }
 
+    // Show loading state
+    Swal.fire({
+      title: 'กำลังบันทึก...',
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
     // Collect fixed budget data
     const expenses = [];
     document.querySelectorAll('.expense-input').forEach(input => {
@@ -583,20 +597,6 @@
       'งบประมาณ': JSON.stringify(budgetData)
     };
 
-    // Optimistic UI: Update local data immediately
-    const isNew = !id;
-    const tempId = id || 'temp-' + Date.now();
-    const optimisticEvent = { ...eventData, ID: tempId, village: window.currentUser.village };
-    
-    if (isNew) {
-      appData.events = [optimisticEvent, ...(appData.events || [])];
-    } else {
-      appData.events = appData.events.map(e => (e.ID || e.id) === id ? optimisticEvent : e);
-    }
-    
-    renderEventsTable();
-    bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
-
     try {
       const formData = new URLSearchParams();
       formData.append('action', 'saveEvent');
@@ -611,29 +611,20 @@
       const res = await response.json();
       
       if (res.success) {
-        // Update the temp ID with real ID if new
-        if (isNew && res.event) {
-          appData.events = appData.events.map(e => e.ID === tempId ? res.event : e);
-          renderEventsTable();
-        }
-        const Toast = Swal.mixin({
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 2000,
-          timerProgressBar: true
-        });
-        Toast.fire({
+        bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+        // Update UI after successful save
+        await renderEvents();
+        Swal.fire({
           icon: 'success',
-          title: res.message
+          title: 'บันทึกสำเร็จ!',
+          text: res.message,
+          timer: 2000,
+          showConfirmButton: false
         });
       } else {
-        // Rollback on error
-        renderEvents(); 
         Swal.fire('เกิดข้อผิดพลาด', res.message, 'error');
       }
     } catch (err) {
-      renderEvents(); // Rollback
       Swal.fire('Error', err.message, 'error');
     }
   }
@@ -653,10 +644,12 @@
       cancelButtonText: 'ยกเลิก'
     }).then(async (result) => {
       if (result.isConfirmed) {
-        // Optimistic UI: Remove from local data immediately
-        const originalEvents = [...appData.events];
-        appData.events = appData.events.filter(e => (e.ID || e.id) !== id);
-        renderEventsTable();
+        // Show loading state
+        Swal.fire({
+          title: 'กำลังลบ...',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
 
         try {
           const formData = new URLSearchParams();
@@ -672,27 +665,18 @@
           const res = await response.json();
           
           if (res.success) {
-            const Toast = Swal.mixin({
-              toast: true,
-              position: 'top-end',
-              showConfirmButton: false,
-              timer: 2000,
-              timerProgressBar: true
-            });
-            Toast.fire({
+            await renderEvents();
+            Swal.fire({
               icon: 'success',
-              title: res.message
+              title: 'ลบสำเร็จ!',
+              text: res.message,
+              timer: 2000,
+              showConfirmButton: false
             });
           } else {
-            // Rollback on error
-            appData.events = originalEvents;
-            renderEventsTable();
             Swal.fire('Error', res.message, 'error');
           }
         } catch (err) {
-          // Rollback on error
-          appData.events = originalEvents;
-          renderEventsTable();
           Swal.fire('Error', err.message, 'error');
         }
       }
@@ -711,15 +695,12 @@
       cancelButtonText: 'ยกเลิก'
     }).then(async (result) => {
       if (result.isConfirmed) {
-        // Optimistic UI: Update local data immediately
-        const originalEvents = JSON.parse(JSON.stringify(appData.events));
-        appData.events = appData.events.map(e => {
-          if ((e.ID || e.id) === id) {
-            return { ...e, approve: true };
-          }
-          return e;
+        // Show loading state
+        Swal.fire({
+          title: 'กำลังยืนยัน...',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
         });
-        renderEventsTable();
 
         try {
           const formData = new URLSearchParams();
@@ -735,27 +716,18 @@
           const res = await response.json();
           
           if (res.success) {
-            const Toast = Swal.mixin({
-              toast: true,
-              position: "top-end",
-              showConfirmButton: false,
+            await renderEvents();
+            Swal.fire({
+              icon: 'success',
+              title: 'ยืนยันสำเร็จ!',
+              text: res.message,
               timer: 2000,
-              timerProgressBar: true
-            });
-            Toast.fire({
-              icon: "success",
-              title: "ยืนยันข้อมูลสำเร็จ"
+              showConfirmButton: false
             });
           } else {
-            // Rollback on error
-            appData.events = originalEvents;
-            renderEventsTable();
             Swal.fire('Error', res.message, 'error');
           }
         } catch (err) {
-          // Rollback on error
-          appData.events = originalEvents;
-          renderEventsTable();
           Swal.fire('Error', err.message, 'error');
         }
       }
@@ -766,9 +738,12 @@
     const e = appData.events.find(item => (item.ID || item.id) === id);
     if (!e) return;
 
+    // Helper to get value by key or lowercase key
+    const getVal = (key) => e[key] || e[key.toLowerCase()] || '';
+
     let budget = { income: 0, expenses: [0, 0, 0, 0, 0, 0] };
     try {
-      budget = JSON.parse(e['งบประมาณ'] || '{}');
+      budget = JSON.parse(getVal('งบประมาณ') || '{}');
     } catch (err) { }
 
     const totalExpense = (budget.expenses || []).reduce((a, b) => a + b, 0);
@@ -831,12 +806,6 @@
           .info-value {
             flex: 1;
           }
-          .text-box {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            white-space: pre-wrap;
-          }
           table {
             width: 100%;
             border-collapse: collapse;
@@ -889,19 +858,19 @@
           <div class="section-title">ข้อมูลทั่วไป</div>
           <div class="info-row">
             <div class="info-label">ชื่อกิจกรรม:</div>
-            <div class="info-value">${e['ชื่อกิจกรรม'] || '-'}</div>
+            <div class="info-value">${getVal('ชื่อกิจกรรม') || '-'}</div>
           </div>
           <div class="info-row">
             <div class="info-label">วันที่จัดกิจกรรม:</div>
-            <div class="info-value">${toThaiDate(e['วันที่จัดกิจกรรม'])}</div>
+            <div class="info-value">${toThaiDate(getVal('วันที่จัดกิจกรรม'))}</div>
           </div>
           <div class="info-row">
             <div class="info-label">เวลา:</div>
-            <div class="info-value">${e['เวลาเริ่ม'] || '-'} น. ถึง ${e['เวลาสิ้นสุด'] || '-'} น.</div>
+            <div class="info-value">${getVal('เวลาเริ่ม') || '-'} น. ถึง ${getVal('เวลาสิ้นสุด') || '-'} น.</div>
           </div>
           <div class="info-row">
             <div class="info-label">สถานที่:</div>
-            <div class="info-value">${e['สถานที่'] || '-'}</div>
+            <div class="info-value">${getVal('สถานที่') || '-'}</div>
           </div>
           <div class="info-row">
             <div class="info-label">ชุมชน/หมู่บ้าน:</div>
@@ -909,29 +878,32 @@
           </div>
           <div class="info-row">
             <div class="info-label">กลุ่มเป้าหมาย:</div>
-            <div class="info-value">${e['กลุ่มเป้าหมาย'] || '-'}</div>
+            <div class="info-value">${getVal('กลุ่มเป้าหมาย') || '-'}</div>
           </div>
         </div>
 
         <div class="section">
           <div class="section-title">รายละเอียดกิจกรรม</div>
-          <div class="text-box">${e['รายละเอียดกิจกรรม'] || '-'}</div>
+          <div style="white-space: pre-wrap; line-height: 1.8;">${getVal('รายละเอียดกิจกรรม') || '-'}</div>
         </div>
 
         <div class="section">
           <div class="section-title">ผลที่เกิดขึ้นจากการทำกิจกรรม</div>
-          <div class="text-box">${e['ผลที่เกิดขึ้นจากการทำกิจกรรม'] || '-'}</div>
+          <div style="white-space: pre-wrap; line-height: 1.8;">${getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '-'}</div>
         </div>
 
-        ${(e['ภาพกิจกรรม1'] || e['ภาพกิจกรรม2'] || e['ภาพกิจกรรม3'] || e['ภาพกิจกรรม4']) ? `
+        ${([1,2,3,4].some(i => getVal(`ภาพกิจกรรม${i}`))) ? `
         <div class="section">
           <div class="section-title">ภาพประกอบกิจกรรม</div>
           <div class="images-container">
-            ${[1,2,3,4].map(i => e[`ภาพกิจกรรม${i}`] ? `
-              <div class="image-item">
-                <img src="${e[`ภาพกิจกรรม${i}`]}" alt="ภาพกิจกรรม ${i}">
-              </div>
-            ` : '').join('')}
+            ${[1,2,3,4].map(i => {
+              const img = getVal(`ภาพกิจกรรม${i}`);
+              return img ? `
+                <div class="image-item">
+                  <img src="${img}" alt="ภาพกิจกรรม ${i}">
+                </div>
+              ` : '';
+            }).join('')}
           </div>
         </div>
         ` : ''}
@@ -2009,13 +1981,16 @@
 
   function formatTimeForInput(timeStr) {
     if (!timeStr) return '';
-    const parts = timeStr.toString().split(':');
-    if (parts.length >= 2) {
-      const hours = parts[0].trim().padStart(2, '0');
-      const minutes = parts[1].trim().substring(0, 2).padStart(2, '0');
+    const cleanTime = timeStr.toString().trim();
+    // Try to extract HH:MM from string
+    const timeMatch = cleanTime.match(/(\d{1,2}):(\d{2})/);
+    if (timeMatch) {
+      const hours = timeMatch[1].padStart(2, '0');
+      const minutes = timeMatch[2].padStart(2, '0');
       return `${hours}:${minutes}`;
     }
-    return timeStr;
+    // If no match, return empty string
+    return '';
   }
 
   function formatTextWithLineBreaks(text) {
