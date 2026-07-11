@@ -129,15 +129,15 @@
       return `
         <tr>
           <td class="ps-4">
-            <div class="fw-bold text-primary">${e['ชื่อกิจกรรม'] || '-'}</div>
+            <div class="fw-bold text-success">${e['ชื่อกิจกรรม'] || '-'}</div>
             <div class="small text-muted"><i class="bi bi-geo-alt me-1"></i>${e.village || '-'}</div>
           </td>
           <td>
-            <div class="fw-bold"><i class="bi bi-calendar3 me-2 text-primary"></i>${e['วันที่จัดกิจกรรม'] || '-'} | ${e['เวลาเริ่ม'] || '-'} - ${e['เวลาสิ้นสุด'] || '-'} น.</div>
+            <div class="fw-bold"><i class="bi bi-calendar3 me-2 text-primary"></i>${e['วันที่จัดกิจกรรม'] || '-'}</div>
             <div class="small text-muted">งบประมาณ: ${budgetAmount}</div>
           </td>
           <td class="text-end pe-4">
-            <div class="d-flex justify-content-end gap-3">
+            <div class="d-flex justify-content-end gap-1">
               <button class="btn btn-sm btn-light border py-1" onclick="generateEventPDF('${eventId}')" title="สร้าง PDF">
                 <i class="bi bi-file-earmark-pdf text-danger"></i>
               </button>
@@ -151,7 +151,7 @@
                 <button class="btn btn-sm btn-light border py-1" onclick="handleDeleteEvent('${eventId}')" title="ลบ">
                   <i class="bi bi-trash3 text-danger"></i>
                 </button>
-                <button class="btn btn-sm btn-primary-th px-3 py-1" onclick="handleApproveEvent('${eventId}', event)">
+                <button class="btn btn-sm btn-primary-th px-3 py-1 nowrap" onclick="handleApproveEvent('${eventId}', event)">
                   <i class="bi bi-check-circle me-1"></i> ยืนยัน
                 </button>
               ` : `
