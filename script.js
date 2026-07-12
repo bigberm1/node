@@ -129,12 +129,12 @@
       return `
         <tr>
           <td class="ps-4">
-            <div class="fw-bold text-primary">${e['ชื่อกิจกรรม'] || '-'}</div>
+            <div class="fw-bold text-success">${e['ชื่อกิจกรรม'] || '-'}</div>
             <div class="small text-muted"><i class="bi bi-geo-alt me-1"></i>${e.village || '-'}</div>
           </td>
           <td>
-            <div class="fw-bold"><i class="bi bi-calendar3 me-2 text-primary"></i>${e['วันที่จัดกิจกรรม'] || '-'} | ${e['เวลาเริ่ม'] || '-'} - ${e['เวลาสิ้นสุด'] || '-'} น.</div>
-            <div class="small text-muted"><i class="bi bi-cash-stack me-2"></i>งบประมาณ: ${budgetAmount}</div>
+            <div class="">${e['วันที่จัดกิจกรรม'] || '-'}</div>
+            <div class="small text-muted">งบประมาณ: ${budgetAmount}</div>
           </td>
           <td class="text-end pe-4">
             <div class="d-flex justify-content-center flex-wrap gap-2">
@@ -2163,21 +2163,20 @@
   }
 
   /**
-   * Helper to improve Thai word wrapping in pdfMake
-   */
-  function prepareThaiText(text) {
-    if (!text) return '-';
-    // Insert Zero-Width Space (\u200B) between Thai characters to help pdfMake wrap words
-    // This is a simple regex that finds boundaries between Thai characters
-    return text.replace(/([ก-๙])(?=[ก-๙])/g, '$1\u200B');
-  }
-
-  /**
-   * Generate PDF for an Event using pdfMake
+   * Generate PDF for an Event using browser-rendered HTML and html2pdf.
    */
   async function generateEventPDF(id) {
     const e = appData.events.find(item => (item.ID || item.id) === id) || (appData.approvedEvents && appData.approvedEvents.find(item => (item.ID || item.id) === id));
     if (!e) return;
+
+    const getVal = (key) => {
+      const normalizedKey = String(key || '').trim();
+      if (!normalizedKey) return '';
+      return e[normalizedKey]
+        ?? e[normalizedKey.toLowerCase()]
+        ?? e[normalizedKey.toUpperCase()]
+        ?? '';
+    };
 
     Swal.fire({
       title: 'กำลังสร้าง PDF...',
@@ -2187,211 +2186,62 @@
     });
 
     try {
-      // 1. Configure Fonts for pdfMake
-      pdfMake.fonts = {
-        THSarabunNew: {
-          normal: 'https://sanwithz.github.io/font/THSarabunNew.ttf',
-          bold: 'https://sanwithz.github.io/font/THSarabunNewBold.ttf',
-          italics: 'https://sanwithz.github.io/font/THSarabunNewItalic.ttf',
-          bolditalics: 'https://sanwithz.github.io/font/THSarabunNewBoldItalic.ttf'
-        }
-      };
-
-      // 2. Prepare Budget Data
       let budget = { income: 0, expenses: [0, 0, 0, 0, 0, 0] };
       try {
-        budget = JSON.parse(e['งบประมาณ'] || '{}');
+        budget = JSON.parse(getVal('งบประมาณ') || '{}');
       } catch (err) { }
 
       const income = parseFloat(budget.income) || 0;
       const expenses = budget.expenses || [];
-      const expenseLabels = [
-        '1. ค่าตอบแทน (วิทยากร/อาสาสมัคร/ประสานงาน)',
-        '2. ค่าจ้าง (จัดทำข้อมูล/ทำของ)',
-        '3. ค่าใช้สอย (พาหนะ/ที่พัก/ประชุม/อาหาร/สถานที่)',
-        '4. ค่าวัสดุ (เครื่องเขียน/สำนักงาน/โฆษณา)',
-        '5. ค่าสาธารณูปโภค (ไฟฟ้า/น้ำ/โทรศัพท์/ไปรษณีย์)',
-        '6. ค่าอื่นๆ'
-      ];
+      const expenseRows = [1, 2, 3, 4, 5, 6].map((index) => {
+        const amount = parseFloat(expenses[index - 1]) || 0;
+        const label = [
+          '1. ค่าตอบแทน (วิทยากร/อาสาสมัคร/ประสานงาน)',
+          '2. ค่าจ้าง (จัดทำข้อมูล/ทำของ)',
+          '3. ค่าใช้สอย (พาหนะ/ที่พัก/ประชุม/อาหาร/สถานที่)',
+          '4. ค่าวัสดุ (เครื่องเขียน/สำนักงาน/โฆษณา)',
+          '5. ค่าสาธารณูปโภค (ไฟฟ้า/น้ำ/โทรศัพท์/ไปรษณีย์)',
+          '6. ค่าอื่นๆ'
+        ][index - 1];
+        return amount > 0 ? `<tr><td style="padding:8px;border:1px solid #dee2e6;">${label}</td><td style="padding:8px;border:1px solid #dee2e6;text-align:right;">${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr>` : '';
+      }).join('');
 
-      let totalExpenses = 0;
-      const budgetRows = [
-        [
-          { text: 'รายการ', style: 'tableHeader' },
-          { text: 'จำนวนเงิน', style: 'tableHeader', alignment: 'right' }
-        ],
-        [
-          { text: 'รายรับ (งบประมาณที่ได้รับ)', bold: true },
-          { text: '฿' + income.toLocaleString(undefined, { minimumFractionDigits: 2 }), alignment: 'right', color: '#198754', bold: true }
-        ]
-      ];
+      const balance = income - (expenses.reduce((sum, value) => sum + (parseFloat(value) || 0), 0));
+      const contentText = String(getVal('รายละเอียดกิจกรรม') || '').trim() || '-';
+      const impactText = String(getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '').trim() || '-';
+      const imageItems = [1, 2, 3, 4].map((i) => {
+        const img = getVal(`ภาพกิจกรรม${i}`);
+        return img ? `<div style="width:calc(50% - 8px);margin-bottom:16px;display:inline-block;vertical-align:top;"><img src="${img}" style="width:100%;height:auto;max-height:240px;object-fit:contain;border-radius:6px;border:1px solid #ddd;padding:4px;background:#fff;"><div style="text-align:center;font-size:12px;color:#666;margin-top:6px;">ภาพประกอบที่ ${i}</div></div>` : '';
+      }).join('');
 
-      expenseLabels.forEach((label, i) => {
-        const amount = parseFloat(expenses[i]) || 0;
-        totalExpenses += amount;
-        if (amount > 0) {
-          budgetRows.push([
-            { text: label, fontSize: 14, margin: [10, 0, 0, 0] },
-            { text: '฿' + amount.toLocaleString(undefined, { minimumFractionDigits: 2 }), alignment: 'right', fontSize: 14 }
-          ]);
-        }
-      });
+      const escapeHtml = (value) => String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 
-      const balance = income - totalExpenses;
-      budgetRows.push([
-        { text: 'รวมรายจ่ายทั้งหมด', alignment: 'right', bold: true, fillColor: '#f8f9fa' },
-        { text: '฿' + totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2 }), alignment: 'right', color: '#dc3545', bold: true, fillColor: '#f8f9fa' }
-      ]);
-      budgetRows.push([
-        { text: 'คงเหลือ', alignment: 'right', bold: true, fillColor: '#e9ecef' },
-        { text: '฿' + balance.toLocaleString(undefined, { minimumFractionDigits: 2 }), alignment: 'right', color: '#0d6efd', bold: true, fillColor: '#e9ecef' }
-      ]);
+      const reportHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet"><style>@page{size:A4;margin:0;}html,body{margin:0;padding:0;background:#fff;font-family:'Sarabun','Kanit',sans-serif;color:#000;box-sizing:border-box;}*,*:before,*:after{box-sizing:inherit;}body{display:flex;justify-content:center;align-items:flex-start;background:#fff;} .page{width:210mm;min-height:297mm;padding:12mm 14mm 16mm;background:#fff;}h1{color:#039780;font-size:24px;margin:0 0 8px;text-align:center;}h2{color:#039780;font-size:18px;margin:18px 0 10px;}table{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed;}th,td{padding:8px;border:1px solid #dee2e6;text-align:left;vertical-align:top;word-break:break-word;overflow-wrap:anywhere;}th{background:#f8f9fa;}img{max-width:100%;height:auto;border-radius:6px;border:1px solid #ddd;padding:4px;background:#fff;display:block;margin:0 auto;} .text-block{white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;text-align:left;line-height:1.6;font-size:13px;} .row{margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;} .label{font-weight:700;display:inline-block;min-width:110px;flex:0 0 110px;} .value{flex:1 1 0;min-width:0;word-break:break-word;overflow-wrap:anywhere;}@media print{body{background:#fff;} .page{box-shadow:none;}} </style></head><body><div class="page"><div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #039780;padding-bottom:15px;"><h1>รายงานสรุปผลการจัดกิจกรรม</h1><p style="font-size:14px;color:#666;margin:0;">หน่วยจัดการจังหวัดเชียงราย (Node มุ่งเป้า สสส.)</p></div><div style="margin-bottom:20px;"><h2>1. ข้อมูลทั่วไป</h2><div class="row"><span class="label">ชื่อกิจกรรม:</span><span class="value">${escapeHtml(String(e['ชื่อกิจกรรม'] || '-'))}</span></div><div class="row"><span class="label">วันและเวลา:</span><span class="value">${escapeHtml(`${toThaiDate(getVal('วันที่จัดกิจกรรม'))} | ${getVal('เวลาเริ่ม') || '-'} - ${getVal('เวลาสิ้นสุด') || '-'} น.`)}</span></div><div class="row"><span class="label">สถานที่:</span><span class="value">${escapeHtml(String(getVal('สถานที่') || '-'))}</span></div><div class="row"><span class="label">ชุมชน/หมู่บ้าน:</span><span class="value">${escapeHtml(String(e.village || '-'))}</span></div></div><div style="margin-bottom:20px;"><h2>2. รายละเอียดกิจกรรม</h2><div class="text-block">${escapeHtml(contentText)}</div></div><div style="margin-bottom:20px;"><h2>3. ผลที่เกิดขึ้น</h2><div class="text-block">${escapeHtml(impactText)}</div></div><div style="margin-bottom:20px;"><h2>4. สรุปงบประมาณ</h2><table><thead><tr><th>รายการ</th><th style="text-align:right;">จำนวนเงิน</th></tr></thead><tbody><tr><td>รายรับ (งบประมาณที่ได้รับ)</td><td style="text-align:right;">฿${income.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr>${expenseRows}<tr><td style="text-align:right;font-weight:bold;">รวมรายจ่ายทั้งหมด</td><td style="text-align:right;font-weight:bold;color:#dc3545;">฿${(expenses.reduce((sum, value) => sum + (parseFloat(value) || 0), 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr><tr><td style="text-align:right;font-weight:bold;">คงเหลือ</td><td style="text-align:right;font-weight:bold;color:#0d6efd;">฿${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr></tbody></table></div>${imageItems ? `<div style="margin-bottom:20px;"><h2>5. ภาพบรรยากาศกิจกรรม</h2>${imageItems}</div>` : ''}<div style="margin-top:30px;text-align:right;font-size:12px;color:#777;">เอกสารนี้สร้างโดยระบบอัตโนมัติ เมื่อวันที่ ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} น.</div></div></body></html>`;
 
-      // 3. Prepare Images
-      const imageContent = [];
-      const imagesPerRow = 2;
-      let currentRow = [];
-      
-      for (let i = 1; i <= 4; i++) {
-        const img = e[`ภาพกิจกรรม${i}`];
-        if (img) {
-          currentRow.push({
-            stack: [
-              { image: img, width: 240, height: 160, margin: [0, 5, 0, 5] },
-              { text: `ภาพประกอบที่ ${i}`, fontSize: 10, color: '#777', alignment: 'center' }
-            ],
-            margin: [5, 5, 5, 15]
-          });
-          
-          if (currentRow.length === imagesPerRow) {
-            imageContent.push({ columns: currentRow, columnGap: 10 });
-            currentRow = [];
-          }
-        }
-      }
-      if (currentRow.length > 0) {
-        imageContent.push({ columns: currentRow, columnGap: 10 });
+      const printWindow = window.open('', '_blank', 'width=900,height=1200,location=no,toolbar=no,menubar=no');
+      if (!printWindow) {
+        Swal.fire('เปิดหน้าต่างไม่สำเร็จ', 'กรุณาอนุญาตให้เปิดหน้าต่างป็อปอัปและลองใหม่อีกครั้ง', 'warning');
+        return;
       }
 
-      // 4. Define Document Definition
-      const docDefinition = {
-        pageSize: 'A4',
-        pageMargins: [40, 40, 40, 40],
-        defaultStyle: {
-          font: 'THSarabunNew',
-          fontSize: 16
-        },
-        styles: {
-          headerTitle: {
-            fontSize: 28,
-            bold: true,
-            color: '#039780',
-            alignment: 'center',
-            margin: [0, 0, 0, 5]
-          },
-          headerSubtitle: {
-            fontSize: 16,
-            color: '#666',
-            alignment: 'center',
-            margin: [0, 0, 0, 20]
-          },
-          sectionTitle: {
-            fontSize: 20,
-            bold: true,
-            color: '#039780',
-            margin: [0, 15, 0, 10]
-          },
-          label: {
-            bold: true,
-            color: '#555'
-          },
-          contentBox: {
-            margin: [0, 2, 0, 10],
-            lineHeight: 1.05,
-            alignment: 'justify'
-          },
-          tableHeader: {
-            bold: true,
-            fontSize: 16,
-            color: 'white',
-            fillColor: '#039780',
-            margin: [0, 5, 0, 5]
-          }
-        },
-        content: [
-          // Header
-          { text: 'รายงานสรุปผลการจัดกิจกรรม', style: 'headerTitle' },
-          { text: 'หน่วยจัดการจังหวัดเชียงราย (Node มุ่งเป้า สสส.)', style: 'headerSubtitle' },
-          { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 2, strokeColor: '#039780' }] },
+      printWindow.document.open();
+      printWindow.document.write(reportHtml);
+      printWindow.document.close();
+      printWindow.focus();
 
-          // Section 1: ข้อมูลทั่วไป
-          { text: '1. ข้อมูลทั่วไป', style: 'sectionTitle' },
-          {
-            table: {
-              widths: [120, '*'],
-              body: [
-                [{ text: 'ชื่อกิจกรรม:', style: 'label' }, { text: e['ชื่อกิจกรรม'] || '-', border: [false, false, false, true] }],
-                [{ text: 'วันและเวลา:', style: 'label' }, { text: `${toThaiDate(e['วันที่จัดกิจกรรม'])} | ${e['เวลาเริ่ม'] || '-'} - ${e['เวลาสิ้นสุด'] || '-'} น.`, border: [false, false, false, true] }],
-                [{ text: 'สถานที่:', style: 'label' }, { text: e['สถานที่'] || '-', border: [false, false, false, true] }],
-                [{ text: 'ชุมชน/หมู่บ้าน:', style: 'label' }, { text: e.village || '-', border: [false, false, false, true] }]
-              ]
-            },
-            layout: 'noBorders',
-            margin: [0, 0, 0, 20]
-          },
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.onafterprint = () => printWindow.close();
+      }, 500);
 
-          // Section 2: รายละเอียดกิจกรรม
-          { text: '2. รายละเอียดกิจกรรม', style: 'sectionTitle' },
-          { text: prepareThaiText(getVal('รายละเอียดกิจกรรม')), style: 'contentBox' },
-
-          // Section 3: ผลที่เกิดขึ้น
-          { text: '3. ผลที่เกิดขึ้น', style: 'sectionTitle' },
-          { text: prepareThaiText(getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม')), style: 'contentBox' },
-
-          // Section 4: สรุปงบประมาณ
-          { text: '4. สรุปงบประมาณ', style: 'sectionTitle' },
-          {
-            table: {
-              headerRows: 1,
-              widths: ['*', 150],
-              body: budgetRows
-            },
-            layout: {
-              hLineWidth: function (i, node) { return 1; },
-              vLineWidth: function (i, node) { return 1; },
-              hLineColor: function (i, node) { return '#dee2e6'; },
-              vLineColor: function (i, node) { return '#dee2e6'; }
-            }
-          },
-
-          // Section 5: ภาพประกอบ
-          imageContent.length > 0 ? { text: '5. ภาพบรรยากาศกิจกรรม', style: 'sectionTitle', pageBreak: 'before' } : '',
-          ...imageContent,
-
-          // Footer
-          {
-            text: `เอกสารนี้สร้างโดยระบบอัตโนมัติ เมื่อวันที่ ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} น.`,
-            style: { fontSize: 10, color: '#999', alignment: 'right', margin: [0, 50, 0, 0] }
-          }
-        ]
-      };
-
-      // 5. Generate and Open PDF
-      pdfMake.createPdf(docDefinition).open();
-      
       Swal.close();
-      const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
-      });
-      Toast.fire({
-        icon: 'success',
-        title: 'สร้าง PDF สำเร็จ'
-      });
-
+      const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      Toast.fire({ icon: 'success', title: 'เปิดหน้าพิมพ์ PDF แล้ว' });
     } catch (error) {
       console.error('PDF Generation Error:', error);
       Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถสร้าง PDF ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง', 'error');
