@@ -1,5 +1,29 @@
-  // TODO: Replace this with your actual GAS Web App URL after deployment
-  const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxmRK93fER7nIibHHNuO42RJ0T-7EYDAe1JhJVvLdr7D34yrNF3gPL9yve6Yuqq7-yR/exec';
+  const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxHXfodzkCwYmJ2CHaJag3NTjroRY-JlnT_IqSPEqOUAN0t3TSuLDGr3M-pI6Ms0apX/exec';
+
+  async function requestGAS(action, payload = {}) {
+    const body = new URLSearchParams();
+    body.append('action', action);
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        body.append(key, typeof value === 'string' ? value : JSON.stringify(value));
+      }
+    });
+
+    const response = await fetch(GAS_WEB_APP_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+      },
+      body
+    });
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    return response.json();
+  }
 
   let appData = {
     projects: [],
@@ -60,17 +84,7 @@
     });
 
     try {
-      const formData = new URLSearchParams();
-      formData.append('action', 'checkLogin');
-      formData.append('username', username);
-      formData.append('password', password);
-
-      const response = await fetch(GAS_WEB_APP_URL, {
-        method: 'POST',
-        body: formData
-      });
-
-      const res = await response.json();
+      const res = await requestGAS('checkLogin', { username, password });
       
       if (res.success) {
         window.currentUser = res.user;
@@ -184,16 +198,7 @@
     }
 
     try {
-      const formData = new URLSearchParams();
-      formData.append('action', 'getAppData');
-      formData.append('user', JSON.stringify(window.currentUser));
-
-      const response = await fetch(GAS_WEB_APP_URL, {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await response.json();
+      const data = await requestGAS('getAppData', { user: window.currentUser });
       appData.events = data.events || [];
       renderEventsTable();
     } catch (err) {
@@ -549,17 +554,7 @@
     };
 
     try {
-      const formData = new URLSearchParams();
-      formData.append('action', 'saveEvent');
-      formData.append('eventData', JSON.stringify(eventData));
-      formData.append('currentUser', JSON.stringify(window.currentUser));
-
-      const response = await fetch(GAS_WEB_APP_URL, {
-        method: 'POST',
-        body: formData
-      });
-
-      const res = await response.json();
+      const res = await requestGAS('saveEvent', { eventData, currentUser: window.currentUser });
       
       if (res.success) {
         bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
@@ -603,17 +598,7 @@
         });
 
         try {
-          const formData = new URLSearchParams();
-          formData.append('action', 'deleteEvent');
-          formData.append('eventId', id);
-          formData.append('currentUser', JSON.stringify(window.currentUser));
-
-          const response = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            body: formData
-          });
-
-          const res = await response.json();
+          const res = await requestGAS('deleteEvent', { eventId: id, currentUser: window.currentUser });
           
           if (res.success) {
             await renderEvents();
@@ -654,17 +639,7 @@
         });
 
         try {
-          const formData = new URLSearchParams();
-          formData.append('action', 'approveEvent');
-          formData.append('eventId', id);
-          formData.append('currentUser', JSON.stringify(window.currentUser));
-
-          const response = await fetch(GAS_WEB_APP_URL, {
-            method: 'POST',
-            body: formData
-          });
-
-          const res = await response.json();
+          const res = await requestGAS('approveEvent', { eventId: id, currentUser: window.currentUser });
           
           if (res.success) {
             await renderEvents();
@@ -1032,18 +1007,7 @@
 
     // 4. Fetch Fresh Data from Server in background
     try {
-      const formData = new URLSearchParams();
-      formData.append('action', 'getAppData');
-      if (window.currentUser) {
-        formData.append('user', JSON.stringify(window.currentUser));
-      }
-
-      const response = await fetch(GAS_WEB_APP_URL, {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await response.json();
+      const data = await requestGAS('getAppData', { user: window.currentUser });
       appData = data;
       
       // Update cache
