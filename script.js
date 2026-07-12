@@ -138,8 +138,11 @@
           </td>
           <td class="text-end pe-4">
             <div class="d-flex justify-content-center flex-wrap gap-2">
-              <button class="btn btn-sm btn-light border py-1" onclick="generateEventPDF('${eventId}')" title="สร้าง PDF">
-                <i class="bi bi-file-earmark-pdf text-danger"></i>
+              <button class="btn btn-sm btn-light border py-1" onclick="generateEventPDF('${eventId}')" title="พิมพ์ PDF">
+                <i class="bi bi-printer text-danger"></i>
+              </button>
+              <button class="btn btn-sm btn-light border py-1" onclick="generateEventImage('${eventId}', 'jpg')" title="สร้าง JPG">
+                <i class="bi bi-file-earmark-image text-success"></i>
               </button>
               <button class="btn btn-sm btn-light border py-1" onclick="openPreviewModal('${eventId}')" title="ดูรายละเอียดกิจกรรม">
                 <i class="bi bi-eye text-primary"></i>
@@ -438,28 +441,13 @@
     spinner.classList.remove('d-none');
 
     try {
-      // ปรับปรุงระบบบีบอัดรูปภาพให้ย่อขนาดอัตโนมัติจนกว่าจะบันทึกลง Google Sheets ได้
-      let maxWidth = 800;
-      let maxHeight = 600;
-      let quality = 0.7;
-      let compressedBase64 = await compressImage(file, maxWidth, maxHeight, quality);
-      
-      // วนลูปบีบอัดจนกว่าขนาดจะน้อยกว่า 49,000 ตัวอักษร (ขีดจำกัด Google Sheets คือ 50,000)
-      let attempts = 0;
-      while (compressedBase64.length > 49000 && attempts < 5) {
-        attempts++;
-        maxWidth *= 0.8;
-        maxHeight *= 0.8;
-        quality *= 0.8;
-        console.log(`Image still large (${compressedBase64.length}), retrying compression attempt ${attempts}...`);
-        compressedBase64 = await compressImage(file, maxWidth, maxHeight, quality);
-      }
+      const originalBase64 = await readFileAsDataUrl(file);
       
       // Hide spinner before previewing
       spinner.classList.add('d-none');
-      setPreview(index, compressedBase64);
+      setPreview(index, originalBase64);
     } catch (err) {
-      console.error('Compression Error:', err);
+      console.error('Image Read Error:', err);
       Swal.fire('Error', 'ไม่สามารถประมวลผลรูปภาพได้', 'error');
       if (cameraIcon) cameraIcon.classList.remove('d-none');
       if (spanText) spanText.classList.remove('d-none');
@@ -467,46 +455,11 @@
     }
   }
 
-  function compressImage(file, maxWidth, maxHeight, quality) {
+  function readFileAsDataUrl(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height) {
-            if (width > maxWidth) {
-              height *= maxWidth / width;
-              width = maxWidth;
-            }
-          } else {
-            if (height > maxHeight) {
-              width *= maxHeight / height;
-              height = maxHeight;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          
-          // Fill background white for JPEGs (to avoid black background on transparent PNGs)
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillRect(0, 0, width, height);
-          
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          // Use JPEG for better compression
-          const dataUrl = canvas.toDataURL('image/jpeg', quality);
-          resolve(dataUrl);
-        };
-        img.onerror = reject;
-      };
+      reader.onload = (event) => resolve(event.target.result);
       reader.onerror = reject;
     });
   }
@@ -2163,9 +2116,17 @@
   }
 
   /**
-   * Generate PDF for an Event using browser-rendered HTML and html2pdf.
+   * Generate PDF or JPG for an Event using a browser-rendered HTML document.
    */
   async function generateEventPDF(id) {
+    return generateEventExport(id, 'pdf');
+  }
+
+  async function generateEventImage(id, format = 'jpg') {
+    return generateEventExport(id, format);
+  }
+
+  async function generateEventExport(id, exportType = 'pdf') {
     const e = appData.events.find(item => (item.ID || item.id) === id) || (appData.approvedEvents && appData.approvedEvents.find(item => (item.ID || item.id) === id));
     if (!e) return;
 
@@ -2178,9 +2139,14 @@
         ?? '';
     };
 
+    const outputType = String(exportType || 'pdf').toLowerCase();
+    const isImageExport = outputType === 'jpg' || outputType === 'jpeg' || outputType === 'png';
+    const imageFormat = outputType === 'png' ? 'png' : 'jpeg';
+    const fileExtension = imageFormat === 'png' ? 'png' : 'jpg';
+
     Swal.fire({
-      title: 'กำลังสร้าง PDF...',
-      html: 'กรุณารอสักครู่ ระบบกำลังจัดเตรียมเอกสาร',
+      title: isImageExport ? 'กำลังสร้างรูปภาพ...' : 'กำลังสร้าง PDF...',
+      html: isImageExport ? 'กรุณารอสักครู่ ระบบกำลังจัดเตรียมรูปภาพ' : 'กรุณารอสักครู่ ระบบกำลังจัดเตรียมเอกสาร',
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading()
     });
@@ -2211,7 +2177,7 @@
       const impactText = String(getVal('ผลที่เกิดขึ้นจากการทำกิจกรรม') || '').trim() || '-';
       const imageItems = [1, 2, 3, 4].map((i) => {
         const img = getVal(`ภาพกิจกรรม${i}`);
-        return img ? `<div style="width:calc(50% - 8px);margin-bottom:16px;display:inline-block;vertical-align:top;"><img src="${img}" style="width:100%;height:auto;max-height:240px;object-fit:contain;border-radius:6px;border:1px solid #ddd;padding:4px;background:#fff;"><div style="text-align:center;font-size:12px;color:#666;margin-top:6px;">ภาพประกอบที่ ${i}</div></div>` : '';
+        return img ? `<div style="width:80%;padding:0 0 10px 0;box-sizing:border-box;display:block;margin:0 auto;"><img src="${img}" style="width:100%;height:auto;max-width:100%;object-fit:contain;background:#fff;margin:0;border:none;padding:0;border-radius:0;"></div>` : '';
       }).join('');
 
       const escapeHtml = (value) => String(value ?? '')
@@ -2221,11 +2187,9 @@
         .replace(/\"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
-      const reportHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet"><style>@page{size:A4;margin:0;}html,body{margin:0;padding:0;background:#fff;font-family:'Sarabun','Kanit',sans-serif;color:#000;box-sizing:border-box;}*,*:before,*:after{box-sizing:inherit;}body{display:flex;justify-content:center;align-items:flex-start;background:#fff;} .page{width:210mm;min-height:297mm;padding:12mm 14mm 16mm;background:#fff;}h1{color:#039780;font-size:24px;margin:0 0 8px;text-align:center;}h2{color:#039780;font-size:18px;margin:18px 0 10px;}table{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed;}th,td{padding:8px;border:1px solid #dee2e6;text-align:left;vertical-align:top;word-break:break-word;overflow-wrap:anywhere;}th{background:#f8f9fa;}img{max-width:100%;height:auto;border-radius:6px;border:1px solid #ddd;padding:4px;background:#fff;display:block;margin:0 auto;} .text-block{white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;text-align:left;line-height:1.6;font-size:13px;} .row{margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;} .label{font-weight:700;display:inline-block;min-width:110px;flex:0 0 110px;} .value{flex:1 1 0;min-width:0;word-break:break-word;overflow-wrap:anywhere;}@media print{body{background:#fff;} .page{box-shadow:none;}} </style></head><body><div class="page"><div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #039780;padding-bottom:15px;"><h1>รายงานสรุปผลการจัดกิจกรรม</h1><p style="font-size:14px;color:#666;margin:0;">หน่วยจัดการจังหวัดเชียงราย (Node มุ่งเป้า สสส.)</p></div><div style="margin-bottom:20px;"><h2>1. ข้อมูลทั่วไป</h2><div class="row"><span class="label">ชื่อกิจกรรม:</span><span class="value">${escapeHtml(String(e['ชื่อกิจกรรม'] || '-'))}</span></div><div class="row"><span class="label">วันและเวลา:</span><span class="value">${escapeHtml(`${toThaiDate(getVal('วันที่จัดกิจกรรม'))} | ${getVal('เวลาเริ่ม') || '-'} - ${getVal('เวลาสิ้นสุด') || '-'} น.`)}</span></div><div class="row"><span class="label">สถานที่:</span><span class="value">${escapeHtml(String(getVal('สถานที่') || '-'))}</span></div><div class="row"><span class="label">ชุมชน/หมู่บ้าน:</span><span class="value">${escapeHtml(String(e.village || '-'))}</span></div></div><div style="margin-bottom:20px;"><h2>2. รายละเอียดกิจกรรม</h2><div class="text-block">${escapeHtml(contentText)}</div></div><div style="margin-bottom:20px;"><h2>3. ผลที่เกิดขึ้น</h2><div class="text-block">${escapeHtml(impactText)}</div></div><div style="margin-bottom:20px;"><h2>4. สรุปงบประมาณ</h2><table><thead><tr><th>รายการ</th><th style="text-align:right;">จำนวนเงิน</th></tr></thead><tbody><tr><td>รายรับ (งบประมาณที่ได้รับ)</td><td style="text-align:right;">฿${income.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr>${expenseRows}<tr><td style="text-align:right;font-weight:bold;">รวมรายจ่ายทั้งหมด</td><td style="text-align:right;font-weight:bold;color:#dc3545;">฿${(expenses.reduce((sum, value) => sum + (parseFloat(value) || 0), 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr><tr><td style="text-align:right;font-weight:bold;">คงเหลือ</td><td style="text-align:right;font-weight:bold;color:#0d6efd;">฿${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr></tbody></table></div>${imageItems ? `<div style="margin-bottom:20px;"><h2>5. ภาพบรรยากาศกิจกรรม</h2>${imageItems}</div>` : ''}<div style="margin-top:30px;text-align:right;font-size:12px;color:#777;">เอกสารนี้สร้างโดยระบบอัตโนมัติ เมื่อวันที่ ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} น.</div></div></body></html>`;
+      const reportHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet"><style>@page{size:A4;margin:20mm;}html,body{margin:0;padding:0;background:#fff;font-family:'Sarabun','Kanit',sans-serif;color:#000;box-sizing:border-box;}*,*:before,*:after{box-sizing:inherit;}body{display:flex;justify-content:center;align-items:flex-start;background:#fff;} .page{width:170mm;min-height:257mm;padding:0;background:#fff;}h1{color:#039780;font-size:24px;margin:0 0 8px;text-align:center;}h2{color:#039780;font-size:18px;margin:18px 0 10px;}table{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed;}th,td{padding:8px;border:1px solid #dee2e6;text-align:left;vertical-align:top;word-break:break-word;overflow-wrap:anywhere;}th{background:#f8f9fa;}img{max-width:100%;height:auto;border-radius:6px;border:1px solid #ddd;padding:4px;background:#fff;display:block;margin:0 auto;} .text-block{white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;text-align:left;line-height:1.6;font-size:13px;} .row{margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;} .label{font-weight:700;display:inline-block;min-width:110px;flex:0 0 110px;} .value{flex:1 1 0;min-width:0;word-break:break-word;overflow-wrap:anywhere;}@media print{body{background:#fff;} .page{box-shadow:none;}} </style></head><body><div class="page"><div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #039780;padding-bottom:15px;"><h1>รายงานสรุปผลการจัดกิจกรรม</h1><p style="font-size:14px;color:#666;margin:0;">หน่วยจัดการจังหวัดเชียงราย (Node มุ่งเป้า สสส.)</p></div><div style="margin-bottom:20px;"><h2>1. ข้อมูลทั่วไป</h2><div class="row"><span class="label">ชื่อกิจกรรม:</span><span class="value">${escapeHtml(String(e['ชื่อกิจกรรม'] || '-'))}</span></div><div class="row"><span class="label">วันและเวลา:</span><span class="value">${escapeHtml(`${toThaiDate(getVal('วันที่จัดกิจกรรม'))} | ${getVal('เวลาเริ่ม') || '-'} - ${getVal('เวลาสิ้นสุด') || '-'} น.`)}</span></div><div class="row"><span class="label">สถานที่:</span><span class="value">${escapeHtml(String(getVal('สถานที่') || '-'))}</span></div><div class="row"><span class="label">ชุมชน/หมู่บ้าน:</span><span class="value">${escapeHtml(String(e.village || '-'))}</span></div></div><div style="margin-bottom:20px;"><h2>2. รายละเอียดกิจกรรม</h2><div class="text-block">${escapeHtml(contentText)}</div></div><div style="margin-bottom:20px;"><h2>3. ผลที่เกิดขึ้น</h2><div class="text-block">${escapeHtml(impactText)}</div></div><div style="margin-bottom:20px;"><h2>4. สรุปงบประมาณ</h2><table><thead><tr><th>รายการ</th><th style="text-align:right;">จำนวนเงิน</th></tr></thead><tbody><tr><td>รายรับ (งบประมาณที่ได้รับ)</td><td style="text-align:right;">฿${income.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr>${expenseRows}<tr><td style="text-align:right;font-weight:bold;">รวมรายจ่ายทั้งหมด</td><td style="text-align:right;font-weight:bold;color:#dc3545;">฿${(expenses.reduce((sum, value) => sum + (parseFloat(value) || 0), 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr><tr><td style="text-align:right;font-weight:bold;">คงเหลือ</td><td style="text-align:right;font-weight:bold;color:#0d6efd;">฿${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr></tbody></table></div>${imageItems ? `<div style="margin-bottom:20px;"><h2>5. ภาพบรรยากาศกิจกรรม</h2>${imageItems}</div>` : ''}</div></body></html>`;
 
       const fileNameBase = String(e['ชื่อกิจกรรม'] || 'กิจกรรม').replace(/[\\/:*?"<>|]/g, '_');
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-        || window.matchMedia('(max-width: 768px)').matches;
 
       const tempFrame = document.createElement('iframe');
       tempFrame.style.position = 'fixed';
@@ -2247,8 +2211,14 @@
         await frameDoc.fonts.ready;
       }
 
-      if (isMobile && typeof html2canvas === 'function') {
-        const canvas = await html2canvas(frameDoc.body, {
+      if (isImageExport) {
+        if (typeof window.html2canvas !== 'function') {
+          tempFrame.remove();
+          Swal.fire('ไม่สามารถสร้างรูปภาพได้', 'ระบบยังไม่สามารถเรียกตัวสร้างรูปภาพได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง', 'warning');
+          return;
+        }
+
+        const canvas = await window.html2canvas(frameDoc.body, {
           scale: 2,
           useCORS: true,
           backgroundColor: '#FFFFFF',
@@ -2257,10 +2227,10 @@
           scrollY: 0
         });
 
-        const dataUrl = canvas.toDataURL('image/png');
+        const dataUrl = canvas.toDataURL(`image/${imageFormat}`);
         const link = document.createElement('a');
         link.href = dataUrl;
-        link.download = `รายงาน_${fileNameBase}.png`;
+        link.download = `รายงาน_${fileNameBase}.${fileExtension}`;
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -2268,7 +2238,7 @@
 
         Swal.close();
         const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
-        Toast.fire({ icon: 'success', title: 'สร้างรูปภาพสำเร็จ' });
+        Toast.fire({ icon: 'success', title: isImageExport ? `สร้าง ${fileExtension.toUpperCase()} สำเร็จ` : 'สร้างรูปภาพสำเร็จ' });
         return;
       }
 
