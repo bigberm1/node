@@ -2223,8 +2223,58 @@
 
       const reportHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet"><style>@page{size:A4;margin:0;}html,body{margin:0;padding:0;background:#fff;font-family:'Sarabun','Kanit',sans-serif;color:#000;box-sizing:border-box;}*,*:before,*:after{box-sizing:inherit;}body{display:flex;justify-content:center;align-items:flex-start;background:#fff;} .page{width:210mm;min-height:297mm;padding:12mm 14mm 16mm;background:#fff;}h1{color:#039780;font-size:24px;margin:0 0 8px;text-align:center;}h2{color:#039780;font-size:18px;margin:18px 0 10px;}table{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed;}th,td{padding:8px;border:1px solid #dee2e6;text-align:left;vertical-align:top;word-break:break-word;overflow-wrap:anywhere;}th{background:#f8f9fa;}img{max-width:100%;height:auto;border-radius:6px;border:1px solid #ddd;padding:4px;background:#fff;display:block;margin:0 auto;} .text-block{white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;text-align:left;line-height:1.6;font-size:13px;} .row{margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start;} .label{font-weight:700;display:inline-block;min-width:110px;flex:0 0 110px;} .value{flex:1 1 0;min-width:0;word-break:break-word;overflow-wrap:anywhere;}@media print{body{background:#fff;} .page{box-shadow:none;}} </style></head><body><div class="page"><div style="text-align:center;margin-bottom:20px;border-bottom:2px solid #039780;padding-bottom:15px;"><h1>รายงานสรุปผลการจัดกิจกรรม</h1><p style="font-size:14px;color:#666;margin:0;">หน่วยจัดการจังหวัดเชียงราย (Node มุ่งเป้า สสส.)</p></div><div style="margin-bottom:20px;"><h2>1. ข้อมูลทั่วไป</h2><div class="row"><span class="label">ชื่อกิจกรรม:</span><span class="value">${escapeHtml(String(e['ชื่อกิจกรรม'] || '-'))}</span></div><div class="row"><span class="label">วันและเวลา:</span><span class="value">${escapeHtml(`${toThaiDate(getVal('วันที่จัดกิจกรรม'))} | ${getVal('เวลาเริ่ม') || '-'} - ${getVal('เวลาสิ้นสุด') || '-'} น.`)}</span></div><div class="row"><span class="label">สถานที่:</span><span class="value">${escapeHtml(String(getVal('สถานที่') || '-'))}</span></div><div class="row"><span class="label">ชุมชน/หมู่บ้าน:</span><span class="value">${escapeHtml(String(e.village || '-'))}</span></div></div><div style="margin-bottom:20px;"><h2>2. รายละเอียดกิจกรรม</h2><div class="text-block">${escapeHtml(contentText)}</div></div><div style="margin-bottom:20px;"><h2>3. ผลที่เกิดขึ้น</h2><div class="text-block">${escapeHtml(impactText)}</div></div><div style="margin-bottom:20px;"><h2>4. สรุปงบประมาณ</h2><table><thead><tr><th>รายการ</th><th style="text-align:right;">จำนวนเงิน</th></tr></thead><tbody><tr><td>รายรับ (งบประมาณที่ได้รับ)</td><td style="text-align:right;">฿${income.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr>${expenseRows}<tr><td style="text-align:right;font-weight:bold;">รวมรายจ่ายทั้งหมด</td><td style="text-align:right;font-weight:bold;color:#dc3545;">฿${(expenses.reduce((sum, value) => sum + (parseFloat(value) || 0), 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr><tr><td style="text-align:right;font-weight:bold;">คงเหลือ</td><td style="text-align:right;font-weight:bold;color:#0d6efd;">฿${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr></tbody></table></div>${imageItems ? `<div style="margin-bottom:20px;"><h2>5. ภาพบรรยากาศกิจกรรม</h2>${imageItems}</div>` : ''}<div style="margin-top:30px;text-align:right;font-size:12px;color:#777;">เอกสารนี้สร้างโดยระบบอัตโนมัติ เมื่อวันที่ ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} น.</div></div></body></html>`;
 
+      const fileNameBase = String(e['ชื่อกิจกรรม'] || 'กิจกรรม').replace(/[\\/:*?"<>|]/g, '_');
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        || window.matchMedia('(max-width: 768px)').matches;
+
+      const tempFrame = document.createElement('iframe');
+      tempFrame.style.position = 'fixed';
+      tempFrame.style.left = '-9999px';
+      tempFrame.style.top = '0';
+      tempFrame.style.width = '210mm';
+      tempFrame.style.height = '297mm';
+      tempFrame.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(tempFrame);
+
+      const frameDoc = tempFrame.contentDocument || tempFrame.contentWindow.document;
+      frameDoc.open();
+      frameDoc.write(reportHtml);
+      frameDoc.close();
+
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await new Promise(resolve => setTimeout(resolve, 700));
+      if (frameDoc.fonts && typeof frameDoc.fonts.ready?.then === 'function') {
+        await frameDoc.fonts.ready;
+      }
+
+      if (isMobile && typeof html2canvas === 'function') {
+        const canvas = await html2canvas(frameDoc.body, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#FFFFFF',
+          logging: false,
+          scrollX: 0,
+          scrollY: 0
+        });
+
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `รายงาน_${fileNameBase}.png`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        tempFrame.remove();
+
+        Swal.close();
+        const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        Toast.fire({ icon: 'success', title: 'สร้างรูปภาพสำเร็จ' });
+        return;
+      }
+
       const printWindow = window.open('', '_blank', 'width=900,height=1200,location=no,toolbar=no,menubar=no');
       if (!printWindow) {
+        tempFrame.remove();
         Swal.fire('เปิดหน้าต่างไม่สำเร็จ', 'กรุณาอนุญาตให้เปิดหน้าต่างป็อปอัปและลองใหม่อีกครั้ง', 'warning');
         return;
       }
@@ -2239,6 +2289,7 @@
         printWindow.onafterprint = () => printWindow.close();
       }, 500);
 
+      tempFrame.remove();
       Swal.close();
       const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
       Toast.fire({ icon: 'success', title: 'เปิดหน้าพิมพ์ PDF แล้ว' });
